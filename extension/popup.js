@@ -11,9 +11,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const savesList = document.getElementById('saves-list');
   const openAppLink = document.getElementById('open-app-link');
 
-  // Single-user mode - skip auth, go straight to main view
-  showMainView();
-  loadRecentSaves();
+  // Check if user is authenticated
+  const response = await chrome.runtime.sendMessage({ action: 'getUser' });
+  if (response && response.user) {
+    showMainView();
+    loadRecentSaves();
+  } else {
+    showAuthView();
+  }
 
   function showAuthView() {
     authView.classList.remove('hidden');
