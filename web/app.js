@@ -27,9 +27,30 @@ class StashApp {
     // Load theme preference
     this.loadTheme();
 
-    // Skip auth - go straight to main screen
-    this.showMainScreen();
-    this.loadData();
+    // Check authentication state
+    const { data: { session } } = await this.supabase.auth.getSession();
+
+    if (session?.user) {
+      // User is logged in
+      this.user = { id: session.user.id };
+      this.showMainScreen();
+      this.loadData();
+    } else {
+      // User is not logged in - show auth screen
+      this.showAuthScreen();
+    }
+
+    // Listen for auth state changes
+    this.supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        this.user = { id: session.user.id };
+        this.showMainScreen();
+        this.loadData();
+      } else if (event === 'SIGNED_OUT') {
+        this.user = null;
+        this.showAuthScreen();
+      }
+    });
 
     this.bindEvents();
   }
