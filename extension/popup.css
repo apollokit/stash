@@ -211,6 +211,12 @@ input:focus {
   font-size: 13px;
 }
 
+.user-email {
+  color: #6b7280;
+  font-size: 12px;
+  margin-right: 12px;
+}
+
 /* Footer */
 .footer {
   display: flex;

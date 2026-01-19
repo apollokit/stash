@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Check if user is authenticated
   const response = await chrome.runtime.sendMessage({ action: 'getUser' });
   if (response && response.user) {
-    showMainView();
+    showMainView(response.user);
     loadRecentSaves();
   } else {
     showAuthView();
@@ -25,9 +25,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     mainView.classList.add('hidden');
   }
 
-  function showMainView() {
+  function showMainView(user) {
     authView.classList.add('hidden');
     mainView.classList.remove('hidden');
+    
+    // Display user email if available
+    if (user && user.email) {
+      const userEmail = document.createElement('span');
+      userEmail.className = 'user-email';
+      userEmail.textContent = user.email;
+      signoutBtn.parentNode.insertBefore(userEmail, signoutBtn);
+    }
   }
 
   // Sign in
@@ -47,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     if (response.success) {
-      showMainView();
+      showMainView(response.user);
       loadRecentSaves();
     } else {
       authError.textContent = response.error;
