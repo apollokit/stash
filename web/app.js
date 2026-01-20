@@ -426,10 +426,14 @@ class StashApp {
     const sortValue = document.getElementById('sort-select').value;
     const [column, direction] = sortValue.split('.');
 
+    // For timeline view, always sort by created_at
+    const isTimelineView = column === 'timeline';
+    const orderColumn = isTimelineView ? 'created_at' : column;
+
     let query = this.supabase
       .from('saves')
       .select('*')
-      .order(column, { ascending: direction === 'asc' });
+      .order(orderColumn, { ascending: direction === 'asc' });
 
     // Apply folder filter
     if (this.currentFolder) {
@@ -468,9 +472,11 @@ class StashApp {
       empty.classList.remove('hidden');
     } else {
       empty.classList.add('hidden');
-      // Use special rendering for weekly view
+      // Use special rendering for weekly view or timeline view
       if (this.currentView === 'weekly') {
         this.renderWeeklyReview();
+      } else if (isTimelineView) {
+        this.renderTimeline();
       } else {
         this.renderSaves();
       }
@@ -479,10 +485,19 @@ class StashApp {
 
   renderSaves() {
     const container = document.getElementById('saves-container');
+    container.className = 'saves-grid';
 
     container.innerHTML = this.saves.map(save => {
       const isHighlight = !!save.highlight;
       const date = new Date(save.created_at).toLocaleDateString();
+
+      const favoriteIcon = save.is_favorite ? `
+        <span class="save-card-favorite">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </span>
+      ` : '';
 
       if (isHighlight) {
         return `
@@ -492,7 +507,10 @@ class StashApp {
               <div class="save-card-highlight">"${this.escapeHtml(save.highlight)}"</div>
               <div class="save-card-title">${this.escapeHtml(save.title || 'Untitled')}</div>
               <div class="save-card-meta">
-                <span class="save-card-date">${date}</span>
+                <span class="save-card-date">
+                  ${date}
+                  ${favoriteIcon}
+                </span>
               </div>
             </div>
           </div>
@@ -507,7 +525,10 @@ class StashApp {
             <div class="save-card-title">${this.escapeHtml(save.title || 'Untitled')}</div>
             <div class="save-card-excerpt">${this.escapeHtml(save.excerpt || '')}</div>
             <div class="save-card-meta">
-              <span class="save-card-date">${date}</span>
+              <span class="save-card-date">
+                ${date}
+                ${favoriteIcon}
+              </span>
             </div>
           </div>
         </div>
@@ -532,6 +553,125 @@ class StashApp {
         }
       });
     });
+  }
+
+  // Timeline rendering
+  renderTimeline() {
+    const container = document.getElementById('saves-container');
+    container.className = 'timeline-container';
+
+    // Group saves by month
+    const savesByMonth = {};
+    this.saves.forEach(save => {
+      const date = new Date(save.created_at);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const monthLabel = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+
+      if (!savesByMonth[monthKey]) {
+        savesByMonth[monthKey] = {
+          label: monthLabel,
+          saves: []
+        };
+      }
+      savesByMonth[monthKey].saves.push(save);
+    });
+
+    // Render timeline
+    let html = '';
+    Object.keys(savesByMonth).forEach(monthKey => {
+      const month = savesByMonth[monthKey];
+      html += `
+        <div class="timeline-month" data-month="${monthKey}">
+          <div class="timeline-month-header">
+            <div class="timeline-month-toggle">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            <span>${month.label}</span>
+          </div>
+          <div class="timeline-saves">
+            ${month.saves.map(save => this.renderTimelineCard(save)).join('')}
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+
+    // Bind toggle events for month headers
+    container.querySelectorAll('.timeline-month-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const toggle = header.querySelector('.timeline-month-toggle');
+        const saves = header.nextElementSibling;
+
+        toggle.classList.toggle('collapsed');
+        saves.classList.toggle('collapsed');
+      });
+    });
+
+    // Bind click events for cards
+    container.querySelectorAll('.timeline-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const id = card.dataset.id;
+        const save = this.saves.find(s => s.id === id);
+        if (save) this.openReadingPane(save);
+      });
+
+      // Bind right-click for context menu
+      card.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const id = card.dataset.id;
+        const save = this.saves.find(s => s.id === id);
+        if (save) {
+          this.showContextMenu(e, save);
+        }
+      });
+    });
+  }
+
+  renderTimelineCard(save) {
+    const date = new Date(save.created_at).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+    const url = save.url ? new URL(save.url).hostname.replace('www.', '') : '';
+    const highlightClass = save.highlight ? 'highlight' : '';
+
+    let contentHtml = '';
+    if (save.highlight) {
+      contentHtml = `<div class="timeline-card-highlight">${this.escapeHtml(save.highlight)}</div>`;
+    } else {
+      const excerpt = save.excerpt || save.content || '';
+      if (excerpt) {
+        contentHtml = `<div class="timeline-card-excerpt">${this.escapeHtml(excerpt.substring(0, 200))}</div>`;
+      }
+    }
+
+    const favoriteIcon = save.is_favorite ? `
+      <div class="timeline-card-favorite">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </div>
+    ` : '';
+
+    return `
+      <div class="timeline-card ${highlightClass}" data-id="${save.id}">
+        <div class="timeline-card-date">
+          <span>${date}</span>
+          ${favoriteIcon}
+        </div>
+        <div class="timeline-card-content">
+          <div class="timeline-card-meta">
+            <div class="timeline-card-site">${this.escapeHtml(save.site_name || url)}</div>
+            ${url ? `<span class="timeline-card-url">${this.escapeHtml(url)}</span>` : ''}
+          </div>
+          <div class="timeline-card-title">${this.escapeHtml(save.title || 'Untitled')}</div>
+          ${contentHtml}
+        </div>
+      </div>
+    `;
   }
 
   // Weekly Review special rendering
