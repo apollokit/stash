@@ -299,6 +299,11 @@ class StashApp {
     });
 
     // Context menu
+    document.getElementById('context-toggle-favorite').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.contextMenuToggleFavorite();
+    });
+
     document.getElementById('context-move-to-folder').addEventListener('mouseenter', () => {
       this.showFolderSubmenu();
     });
@@ -435,6 +440,8 @@ class StashApp {
       query = query.not('highlight', 'is', null);
     } else if (this.currentView === 'articles') {
       query = query.is('highlight', null);
+    } else if (this.currentView === 'favorites') {
+      query = query.eq('is_favorite', true);
     } else if (this.currentView === 'archived') {
       query = query.eq('is_archived', true);
     } else if (this.currentView === 'weekly') {
@@ -779,6 +786,7 @@ class StashApp {
       highlights: 'Highlights',
       articles: 'Articles',
       kindle: 'Kindle Highlights',
+      favorites: 'Favorites',
       archived: 'Archived',
       stats: 'Stats',
     };
@@ -874,7 +882,7 @@ class StashApp {
 
     // Update button states
     document.getElementById('archive-btn').classList.toggle('active', save.is_archived);
-    document.getElementById('favorite-btn').classList.toggle('active', save.is_favorite);
+    this.updateFavoriteButton();
     this.updateFolderButton();
 
     pane.classList.remove('hidden');
@@ -1041,7 +1049,21 @@ class StashApp {
       .eq('id', this.currentSave.id);
 
     this.currentSave.is_favorite = newValue;
-    document.getElementById('favorite-btn').classList.toggle('active', newValue);
+    this.updateFavoriteButton();
+  }
+
+  updateFavoriteButton() {
+    const outlineIcon = document.querySelector('.heart-icon-outline');
+    const filledIcon = document.querySelector('.heart-icon-filled');
+    const isFavorite = this.currentSave?.is_favorite;
+
+    if (isFavorite) {
+      outlineIcon?.classList.add('hidden');
+      filledIcon?.classList.remove('hidden');
+    } else {
+      outlineIcon?.classList.remove('hidden');
+      filledIcon?.classList.add('hidden');
+    }
   }
 
   async deleteSave() {
@@ -1251,6 +1273,22 @@ class StashApp {
     this.contextMenuSave = save;
     const menu = document.getElementById('context-menu');
     const removeItem = document.getElementById('context-remove-from-folder');
+    const favoriteItem = document.getElementById('context-toggle-favorite');
+
+    // Update favorite icon and text based on current state
+    const heartOutline = favoriteItem.querySelector('.context-heart-outline');
+    const heartFilled = favoriteItem.querySelector('.context-heart-filled');
+    const favoriteText = favoriteItem.querySelector('span');
+
+    if (save.is_favorite) {
+      heartOutline?.classList.add('hidden');
+      heartFilled?.classList.remove('hidden');
+      if (favoriteText) favoriteText.textContent = 'Favorited (click to toggle)';
+    } else {
+      heartOutline?.classList.remove('hidden');
+      heartFilled?.classList.add('hidden');
+      if (favoriteText) favoriteText.textContent = 'Not favorited (click to toggle)';
+    }
 
     // Show/hide "Remove from folder" based on whether save has a folder
     if (save.folder_id) {
@@ -1374,6 +1412,42 @@ class StashApp {
 
     // Reload the folder view to remove the item
     this.loadSaves();
+  }
+
+  async contextMenuToggleFavorite() {
+    if (!this.contextMenuSave) return;
+
+    const newValue = !this.contextMenuSave.is_favorite;
+    const { error } = await this.supabase
+      .from('saves')
+      .update({ is_favorite: newValue })
+      .eq('id', this.contextMenuSave.id);
+
+    if (error) {
+      console.error('Error toggling favorite:', error);
+      this.hideContextMenu();
+      return;
+    }
+
+    // Update the save in the saves array
+    const save = this.saves.find(s => s.id === this.contextMenuSave.id);
+    if (save) {
+      save.is_favorite = newValue;
+    }
+
+    // If this is the currently open save, update it
+    if (this.currentSave?.id === this.contextMenuSave.id) {
+      this.currentSave.is_favorite = newValue;
+      this.updateFavoriteButton();
+    }
+
+    // Hide context menu
+    this.hideContextMenu();
+
+    // If we're in favorites view and unfavoriting, reload to remove the item
+    if (this.currentView === 'favorites' && !newValue) {
+      this.loadSaves();
+    }
   }
 
   async showStats() {
