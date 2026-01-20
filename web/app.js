@@ -4,6 +4,7 @@ class StashApp {
     this.supabase = null;
     this.user = { id: CONFIG.USER_ID }; // Hardcoded single user
     this.currentView = 'all';
+    this.currentFolder = null;
     this.currentSave = null;
     this.saves = [];
     this.tags = [];
@@ -387,8 +388,12 @@ class StashApp {
       .select('*')
       .order(column, { ascending: direction === 'asc' });
 
+    // Apply folder filter
+    if (this.currentFolder) {
+      query = query.eq('folder_id', this.currentFolder.id);
+    }
     // Apply view filters
-    if (this.currentView === 'highlights') {
+    else if (this.currentView === 'highlights') {
       query = query.not('highlight', 'is', null);
     } else if (this.currentView === 'articles') {
       query = query.is('highlight', null);
@@ -673,14 +678,30 @@ class StashApp {
         ${this.escapeHtml(folder.name)}
       </a>
     `).join('');
+
+    // Bind click events
+    container.querySelectorAll('.nav-item[data-folder]').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const folderId = item.dataset.folder;
+        const folder = this.folders.find(f => f.id === folderId);
+        if (folder) {
+          this.setFolder(folder);
+        }
+      });
+    });
   }
 
   setView(view) {
     this.currentView = view;
+    this.currentFolder = null; // Clear folder when switching views
 
     // Update nav
     document.querySelectorAll('.nav-item[data-view]').forEach(item => {
       item.classList.toggle('active', item.dataset.view === view);
+    });
+    document.querySelectorAll('.nav-item[data-folder]').forEach(item => {
+      item.classList.remove('active');
     });
 
     // Update title
@@ -701,6 +722,24 @@ class StashApp {
     } else {
       this.loadSaves();
     }
+  }
+
+  setFolder(folder) {
+    this.currentFolder = folder;
+    this.currentView = null; // Clear view when selecting folder
+
+    // Update nav
+    document.querySelectorAll('.nav-item[data-view]').forEach(item => {
+      item.classList.remove('active');
+    });
+    document.querySelectorAll('.nav-item[data-folder]').forEach(item => {
+      item.classList.toggle('active', item.dataset.folder === folder.id);
+    });
+
+    // Update title
+    document.getElementById('view-title').textContent = folder.name;
+
+    this.loadSaves();
   }
 
   async search(query) {
