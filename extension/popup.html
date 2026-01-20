@@ -42,6 +42,24 @@
           </svg>
           Save This Page
         </button>
+        <div class="folder-save-container">
+          <button id="save-to-folder-btn" class="btn primary folder-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span id="folder-btn-text">Save to folder</span>
+          </button>
+          <button id="folder-expand-btn" class="btn primary expand-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div id="folder-dropdown" class="folder-dropdown hidden">
+            <div class="folder-list" id="folder-list">
+              <p class="empty">Loading folders...</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Recent Saves -->

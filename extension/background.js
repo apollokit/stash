@@ -75,9 +75,9 @@ async function saveHighlight(tab, selectionText) {
 }
 
 // Save full page
-async function savePage(tab) {
+async function savePage(tab, folderId = null) {
   try {
-    console.log('savePage called for:', tab.url);
+    console.log('savePage called for:', tab.url, 'folder:', folderId);
     let article;
 
     // Extract from current page - inject content script first if needed
@@ -104,7 +104,7 @@ async function savePage(tab) {
     }
 
     console.log('Inserting into Supabase...');
-    const result = await supabase.insert('saves', {
+    const saveData = {
       user_id: CONFIG.USER_ID,
       url: tab.url,
       title: article.title,
@@ -115,7 +115,14 @@ async function savePage(tab) {
       published_at: article.publishedTime,
       image_url: article.imageUrl,
       source: 'extension',
-    });
+    };
+
+    // Add folder_id if provided
+    if (folderId) {
+      saveData.folder_id = folderId;
+    }
+
+    const result = await supabase.insert('saves', saveData);
     console.log('Insert result:', result);
 
     chrome.tabs.sendMessage(tab.id, {
@@ -137,7 +144,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'savePage') {
     chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
       if (tabs[0]) {
-        await savePage(tabs[0]);
+        await savePage(tabs[0], request.folderId);
         sendResponse({ success: true });
       }
     });
@@ -186,6 +193,37 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         });
         sendResponse({ success: true, saves });
       } catch (err) {
+        sendResponse({ success: false, error: err.message });
+      }
+    })();
+    return true;
+  }
+
+  if (request.action === 'getFolders') {
+    (async () => {
+      // console.log('getFolders: Starting request');
+      if (!supabase) await initSupabase();
+      try {
+        // Get the current user
+        // console.log('getFolders: Getting user...');
+        const user = await supabase.getUser();
+        // console.log('getFolders: User result:', user);
+
+        if (!user) {
+          // console.log('getFolders: No user found');
+          sendResponse({ success: false, error: 'Not authenticated' });
+          return;
+        }
+
+        // console.log('getFolders: Fetching folders for user:', user.id);
+        const folders = await supabase.select('folders', {
+          filters: { user_id: user.id },
+          order: 'name.asc',
+        });
+        // console.log('getFolders: Folders result:', folders);
+        sendResponse({ success: true, folders });
+      } catch (err) {
+        // console.error('getFolders: Error:', err);
         sendResponse({ success: false, error: err.message });
       }
     })();

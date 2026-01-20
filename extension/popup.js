@@ -10,6 +10,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const savePageBtn = document.getElementById('save-page-btn');
   const savesList = document.getElementById('saves-list');
   const openAppLink = document.getElementById('open-app-link');
+  const saveToFolderBtn = document.getElementById('save-to-folder-btn');
+  const folderExpandBtn = document.getElementById('folder-expand-btn');
+  const folderDropdown = document.getElementById('folder-dropdown');
+  const folderList = document.getElementById('folder-list');
+  const folderBtnText = document.getElementById('folder-btn-text');
+
+  let folders = [];
+  let selectedFolder = null;
 
   // Check if user is authenticated
   const response = await chrome.runtime.sendMessage({ action: 'getUser' });
@@ -28,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function showMainView(user) {
     authView.classList.add('hidden');
     mainView.classList.remove('hidden');
-    
+
     // Display user email if available
     if (user && user.email) {
       const userEmail = document.createElement('span');
@@ -36,6 +44,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       userEmail.textContent = user.email;
       signoutBtn.parentNode.insertBefore(userEmail, signoutBtn);
     }
+
+    // Load folders and last used folder
+    loadFolders();
   }
 
   // Sign in
@@ -162,6 +173,122 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
   }
+
+  // Load folders
+  async function loadFolders() {
+    const response = await chrome.runtime.sendMessage({ action: 'getFolders' });
+
+    if (!response.success || !response.folders?.length) {
+      folders = [];
+      renderFolderList(); // Update UI even when there are no folders
+      return;
+    }
+
+    folders = response.folders;
+
+    // Load last used folder from storage
+    chrome.storage.local.get(['lastFolderId'], (result) => {
+      if (result.lastFolderId) {
+        const folder = folders.find(f => f.id === result.lastFolderId);
+        if (folder) {
+          selectedFolder = folder;
+          updateFolderButtonText();
+        }
+      }
+    });
+
+    renderFolderList();
+  }
+
+  // Render folder dropdown list
+  function renderFolderList() {
+    if (!folders.length) {
+      folderList.innerHTML = '<p class="empty">No folders yet</p>';
+      return;
+    }
+
+    folderList.innerHTML = folders.map(folder => `
+      <div class="folder-item" data-folder-id="${folder.id}">
+        <div class="folder-color" style="background-color: ${folder.color}"></div>
+        <div class="folder-name">${escapeHtml(folder.name)}</div>
+      </div>
+    `).join('');
+
+    // Add click handlers
+    folderList.querySelectorAll('.folder-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const folderId = item.dataset.folderId;
+        selectedFolder = folders.find(f => f.id === folderId);
+        updateFolderButtonText();
+        folderDropdown.classList.add('hidden');
+
+        // Save to storage
+        chrome.storage.local.set({ lastFolderId: folderId });
+      });
+    });
+  }
+
+  // Update folder button text
+  function updateFolderButtonText() {
+    if (selectedFolder) {
+      folderBtnText.textContent = 'Save to folder \"' + selectedFolder.name + '\"';
+    } else {
+      folderBtnText.textContent = 'Save to folder';
+    }
+  }
+
+  // Toggle folder dropdown
+  folderExpandBtn.addEventListener('click', () => {
+    folderDropdown.classList.toggle('hidden');
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!folderExpandBtn.contains(e.target) &&
+        !folderDropdown.contains(e.target) &&
+        !saveToFolderBtn.contains(e.target)) {
+      folderDropdown.classList.add('hidden');
+    }
+  });
+
+  // Save to folder
+  saveToFolderBtn.addEventListener('click', async () => {
+    if (!selectedFolder) {
+      folderDropdown.classList.remove('hidden');
+      return;
+    }
+
+    saveToFolderBtn.disabled = true;
+    saveToFolderBtn.innerHTML = `
+      <svg class="spinning" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+      </svg>
+      Saving...
+    `;
+
+    await chrome.runtime.sendMessage({
+      action: 'savePage',
+      folderId: selectedFolder.id
+    });
+
+    saveToFolderBtn.disabled = false;
+    saveToFolderBtn.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      Saved!
+    `;
+
+    setTimeout(() => {
+      saveToFolderBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span id="folder-btn-text">${selectedFolder ? escapeHtml(selectedFolder.name) : 'Save to folder'}</span>
+      `;
+      loadRecentSaves();
+    }, 1500);
+  });
 
   // Open web app
   openAppLink.addEventListener('click', (e) => {
