@@ -819,6 +819,7 @@ class StashApp {
     // Update button states
     document.getElementById('archive-btn').classList.toggle('active', save.is_archived);
     document.getElementById('favorite-btn').classList.toggle('active', save.is_favorite);
+    this.updateFolderButton();
 
     pane.classList.remove('hidden');
     // Add open class for mobile slide-in animation
@@ -1097,10 +1098,21 @@ class StashApp {
     // Update current save
     this.currentSave.folder_id = folderId;
 
-    // Update the folder button to show it's in a folder
-    const folder = this.folders.find(f => f.id === folderId);
-    if (folder) {
-      document.getElementById('folder-btn').classList.add('active');
+    // Update the folder button icon
+    this.updateFolderButton();
+  }
+
+  updateFolderButton() {
+    const outlineIcon = document.querySelector('.folder-icon-outline');
+    const filledIcon = document.querySelector('.folder-icon-filled');
+    const hasFolder = this.currentSave?.folder_id;
+
+    if (hasFolder) {
+      outlineIcon?.classList.add('hidden');
+      filledIcon?.classList.remove('hidden');
+    } else {
+      outlineIcon?.classList.remove('hidden');
+      filledIcon?.classList.add('hidden');
     }
   }
 
