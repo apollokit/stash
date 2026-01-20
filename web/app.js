@@ -32,7 +32,7 @@ class StashApp {
 
     if (session?.user) {
       // User is logged in
-      this.user = { id: session.user.id };
+      this.user = { id: session.user.id, email: session.user.email };
       this.showMainScreen();
       this.loadData();
     } else {
@@ -43,7 +43,7 @@ class StashApp {
     // Listen for auth state changes
     this.supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        this.user = { id: session.user.id };
+        this.user = { id: session.user.id, email: session.user.email };
         this.showMainScreen();
         this.loadData();
       } else if (event === 'SIGNED_OUT') {
@@ -292,6 +292,11 @@ class StashApp {
   showMainScreen() {
     document.getElementById('auth-screen').classList.add('hidden');
     document.getElementById('main-screen').classList.remove('hidden');
+    // Display user email
+    const userEmailEl = document.getElementById('user-email');
+    if (userEmailEl && this.user?.email) {
+      userEmailEl.textContent = this.user.email;
+    }
   }
 
   async signIn() {
