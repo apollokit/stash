@@ -226,6 +226,19 @@
             </svg>
           </button>
           <div class="reading-actions">
+            <div class="folder-dropdown">
+              <button class="btn icon" id="folder-btn" title="Add to folder">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+              </button>
+              <div class="folder-dropdown-menu hidden" id="folder-dropdown-menu">
+                <div class="folder-dropdown-header">Add to folder</div>
+                <div class="folder-dropdown-list" id="folder-dropdown-list">
+                  <!-- Folders will be populated here -->
+                </div>
+              </div>
+            </div>
             <button class="btn icon" id="archive-btn" title="Archive">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="21 8 21 21 3 21 3 8"></polyline>

@@ -130,6 +130,20 @@ class StashApp {
       this.closeReadingPane();
     });
 
+    document.getElementById('folder-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.toggleFolderDropdown();
+    });
+
+    // Close folder dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('folder-dropdown-menu');
+      const folderBtn = document.getElementById('folder-btn');
+      if (!dropdown.contains(e.target) && e.target !== folderBtn && !folderBtn.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
     document.getElementById('archive-btn').addEventListener('click', () => {
       this.toggleArchive();
     });
@@ -1027,6 +1041,67 @@ class StashApp {
       .insert({ user_id: this.user.id, name: name.trim() });
 
     this.loadFolders();
+  }
+
+  toggleFolderDropdown() {
+    const dropdown = document.getElementById('folder-dropdown-menu');
+    const isHidden = dropdown.classList.contains('hidden');
+
+    if (isHidden) {
+      this.populateFolderDropdown();
+      dropdown.classList.remove('hidden');
+    } else {
+      dropdown.classList.add('hidden');
+    }
+  }
+
+  populateFolderDropdown() {
+    const list = document.getElementById('folder-dropdown-list');
+    const currentFolderId = this.currentSave?.folder_id;
+
+    if (this.folders.length === 0) {
+      list.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">No folders yet</div>';
+      return;
+    }
+
+    list.innerHTML = this.folders.map(folder => `
+      <div class="folder-dropdown-item ${folder.id === currentFolderId ? 'active' : ''}" data-folder-id="${folder.id}">
+        <span style="color: ${folder.color}">📁</span>
+        <span>${this.escapeHtml(folder.name)}</span>
+      </div>
+    `).join('');
+
+    // Bind click events
+    list.querySelectorAll('.folder-dropdown-item').forEach(item => {
+      item.addEventListener('click', async () => {
+        const folderId = item.dataset.folderId;
+        await this.addSaveToFolder(folderId);
+        document.getElementById('folder-dropdown-menu').classList.add('hidden');
+      });
+    });
+  }
+
+  async addSaveToFolder(folderId) {
+    if (!this.currentSave) return;
+
+    const { error } = await this.supabase
+      .from('saves')
+      .update({ folder_id: folderId })
+      .eq('id', this.currentSave.id);
+
+    if (error) {
+      console.error('Error adding to folder:', error);
+      return;
+    }
+
+    // Update current save
+    this.currentSave.folder_id = folderId;
+
+    // Update the folder button to show it's in a folder
+    const folder = this.folders.find(f => f.id === folderId);
+    if (folder) {
+      document.getElementById('folder-btn').classList.add('active');
+    }
   }
 
   async showStats() {

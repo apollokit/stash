@@ -637,6 +637,63 @@ input, select {
   gap: 4px;
 }
 
+/* Folder Dropdown */
+.folder-dropdown {
+  position: relative;
+}
+
+.folder-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  min-width: 200px;
+  max-width: 250px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.folder-dropdown-menu.hidden {
+  display: none;
+}
+
+.folder-dropdown-header {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.folder-dropdown-list {
+  padding: 4px;
+}
+
+.folder-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  transition: background 0.15s;
+}
+
+.folder-dropdown-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.folder-dropdown-item.active {
+  background: var(--bg-tertiary);
+  color: var(--primary);
+}
+
 .reading-content {
   flex: 1;
   overflow-y: auto;
