@@ -687,13 +687,21 @@ class StashApp {
   renderFolders() {
     const container = document.getElementById('folders-list');
     container.innerHTML = this.folders.map(folder => `
-      <a href="#" class="nav-item" data-folder="${folder.id}">
-        <span style="color: ${folder.color}">📁</span>
-        ${this.escapeHtml(folder.name)}
-      </a>
+      <div class="folder-item">
+        <a href="#" class="nav-item" data-folder="${folder.id}">
+          <span style="color: ${folder.color}">📁</span>
+          ${this.escapeHtml(folder.name)}
+        </a>
+        <button class="folder-delete-btn" data-folder-id="${folder.id}" title="Delete folder">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
     `).join('');
 
-    // Bind click events
+    // Bind click events for folder items
     container.querySelectorAll('.nav-item[data-folder]').forEach(item => {
       item.addEventListener('click', (e) => {
         e.preventDefault();
@@ -701,6 +709,19 @@ class StashApp {
         const folder = this.folders.find(f => f.id === folderId);
         if (folder) {
           this.setFolder(folder);
+        }
+      });
+    });
+
+    // Bind click events for delete buttons
+    container.querySelectorAll('.folder-delete-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const folderId = btn.dataset.folderId;
+        const folder = this.folders.find(f => f.id === folderId);
+        if (folder) {
+          await this.deleteFolder(folder);
         }
       });
     });
@@ -750,8 +771,9 @@ class StashApp {
       item.classList.toggle('active', item.dataset.folder === folder.id);
     });
 
-    // Update title
-    document.getElementById('view-title').textContent = folder.name;
+    // Update title with folder icon
+    const viewTitle = document.getElementById('view-title');
+    viewTitle.innerHTML = `<span style="color: ${folder.color || '#6366f1'}">📁</span> ${this.escapeHtml(folder.name)}`;
 
     this.loadSaves();
   }
@@ -1044,6 +1066,30 @@ class StashApp {
     this.loadFolders();
   }
 
+  async deleteFolder(folder) {
+    if (!confirm(`Delete folder "${folder.name}"? Items in this folder will not be deleted.`)) {
+      return;
+    }
+
+    const { error } = await this.supabase
+      .from('folders')
+      .delete()
+      .eq('id', folder.id);
+
+    if (error) {
+      console.error('Error deleting folder:', error);
+      alert('Failed to delete folder');
+      return;
+    }
+
+    // If we're currently viewing this folder, go back to All Saves
+    if (this.currentFolder?.id === folder.id) {
+      this.setView('all');
+    }
+
+    this.loadFolders();
+  }
+
   toggleFolderDropdown() {
     const dropdown = document.getElementById('folder-dropdown-menu');
     const isHidden = dropdown.classList.contains('hidden');
@@ -1060,26 +1106,52 @@ class StashApp {
     const list = document.getElementById('folder-dropdown-list');
     const currentFolderId = this.currentSave?.folder_id;
 
-    if (this.folders.length === 0) {
-      list.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">No folders yet</div>';
-      return;
+    let html = '';
+
+    // Add "Remove from folder" option if currently in a folder
+    if (currentFolderId) {
+      html += `
+        <div class="folder-dropdown-item remove-from-folder" data-action="remove">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <span>Remove from folder</span>
+        </div>
+        <div class="folder-dropdown-divider"></div>
+      `;
     }
 
-    list.innerHTML = this.folders.map(folder => `
-      <div class="folder-dropdown-item ${folder.id === currentFolderId ? 'active' : ''}" data-folder-id="${folder.id}">
-        <span style="color: ${folder.color}">📁</span>
-        <span>${this.escapeHtml(folder.name)}</span>
-      </div>
-    `).join('');
+    if (this.folders.length === 0) {
+      html += '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">No folders yet</div>';
+    } else {
+      html += this.folders.map(folder => `
+        <div class="folder-dropdown-item ${folder.id === currentFolderId ? 'active' : ''}" data-folder-id="${folder.id}">
+          <span style="color: ${folder.color}">📁</span>
+          <span>${this.escapeHtml(folder.name)}</span>
+        </div>
+      `).join('');
+    }
 
-    // Bind click events
-    list.querySelectorAll('.folder-dropdown-item').forEach(item => {
+    list.innerHTML = html;
+
+    // Bind click events for folders
+    list.querySelectorAll('.folder-dropdown-item[data-folder-id]').forEach(item => {
       item.addEventListener('click', async () => {
         const folderId = item.dataset.folderId;
         await this.addSaveToFolder(folderId);
         document.getElementById('folder-dropdown-menu').classList.add('hidden');
       });
     });
+
+    // Bind click event for remove from folder
+    const removeBtn = list.querySelector('.folder-dropdown-item[data-action="remove"]');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', async () => {
+        await this.removeSaveFromFolder();
+        document.getElementById('folder-dropdown-menu').classList.add('hidden');
+      });
+    }
   }
 
   async addSaveToFolder(folderId) {
@@ -1100,6 +1172,31 @@ class StashApp {
 
     // Update the folder button icon
     this.updateFolderButton();
+  }
+
+  async removeSaveFromFolder() {
+    if (!this.currentSave) return;
+
+    const { error } = await this.supabase
+      .from('saves')
+      .update({ folder_id: null })
+      .eq('id', this.currentSave.id);
+
+    if (error) {
+      console.error('Error removing from folder:', error);
+      return;
+    }
+
+    // Update current save
+    this.currentSave.folder_id = null;
+
+    // Update the folder button icon
+    this.updateFolderButton();
+
+    // If we're currently in a folder view, reload saves to remove this item
+    if (this.currentFolder) {
+      this.loadSaves();
+    }
   }
 
   updateFolderButton() {

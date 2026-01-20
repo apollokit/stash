@@ -371,6 +371,40 @@ input, select {
   color: var(--primary);
 }
 
+.folder-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.folder-item .nav-item {
+  flex: 1;
+  padding-right: 32px;
+}
+
+.folder-delete-btn {
+  position: absolute;
+  right: 8px;
+  padding: 4px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.folder-item:hover .folder-delete-btn {
+  opacity: 1;
+}
+
+.folder-delete-btn:hover {
+  color: var(--danger);
+}
+
 .tags-cloud {
   display: flex;
   flex-wrap: wrap;
@@ -692,6 +726,20 @@ input, select {
 .folder-dropdown-item.active {
   background: var(--bg-tertiary);
   color: var(--primary);
+}
+
+.folder-dropdown-item.remove-from-folder {
+  color: var(--danger);
+}
+
+.folder-dropdown-item.remove-from-folder:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.folder-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
 }
 
 .reading-content {
