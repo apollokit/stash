@@ -297,6 +297,27 @@ class StashApp {
     document.getElementById('digest-enabled').addEventListener('change', () => {
       this.updateDigestOptionsState();
     });
+
+    // Context menu
+    document.getElementById('context-remove-from-folder').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.contextMenuRemoveFromFolder();
+    });
+
+    // Close context menu when clicking anywhere
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#context-menu')) {
+        this.hideContextMenu();
+      }
+    });
+
+    // Prevent default context menu
+    document.addEventListener('contextmenu', (e) => {
+      // Only prevent default on save cards when in folder view
+      if (this.currentFolder && e.target.closest('.save-card')) {
+        e.preventDefault();
+      }
+    });
   }
 
   showAuthScreen() {
@@ -490,6 +511,18 @@ class StashApp {
         const save = this.saves.find(s => s.id === id);
         if (save) this.openReadingPane(save);
       });
+
+      // Bind right-click for context menu when in folder view
+      if (this.currentFolder) {
+        card.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          const id = card.dataset.id;
+          const save = this.saves.find(s => s.id === id);
+          if (save) {
+            this.showContextMenu(e, save);
+          }
+        });
+      }
     });
   }
 
@@ -1211,6 +1244,49 @@ class StashApp {
       outlineIcon?.classList.remove('hidden');
       filledIcon?.classList.add('hidden');
     }
+  }
+
+  showContextMenu(e, save) {
+    this.contextMenuSave = save;
+    const menu = document.getElementById('context-menu');
+
+    // Position the menu at cursor
+    menu.style.left = `${e.pageX}px`;
+    menu.style.top = `${e.pageY}px`;
+    menu.classList.remove('hidden');
+  }
+
+  hideContextMenu() {
+    const menu = document.getElementById('context-menu');
+    menu.classList.add('hidden');
+    this.contextMenuSave = null;
+  }
+
+  async contextMenuRemoveFromFolder() {
+    if (!this.contextMenuSave) return;
+
+    const { error } = await this.supabase
+      .from('saves')
+      .update({ folder_id: null })
+      .eq('id', this.contextMenuSave.id);
+
+    if (error) {
+      console.error('Error removing from folder:', error);
+      this.hideContextMenu();
+      return;
+    }
+
+    // If this is the currently open save, update it
+    if (this.currentSave?.id === this.contextMenuSave.id) {
+      this.currentSave.folder_id = null;
+      this.updateFolderButton();
+    }
+
+    // Hide context menu before reloading
+    this.hideContextMenu();
+
+    // Reload the folder view to remove the item
+    this.loadSaves();
   }
 
   async showStats() {
