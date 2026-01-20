@@ -160,6 +160,10 @@ class StashApp {
       this.addTagToSave();
     });
 
+    document.getElementById('generate-audio-btn').addEventListener('click', () => {
+      this.generateAudio();
+    });
+
     // Mobile menu
     const sidebar = document.querySelector('.sidebar');
     const overlay = document.getElementById('sidebar-overlay');
@@ -990,20 +994,24 @@ class StashApp {
     // Handle audio player visibility
     const audioPlayer = document.getElementById('audio-player');
     const audioGenerating = document.getElementById('audio-generating');
+    const audioGenerateSection = document.getElementById('audio-generate-section');
 
     if (save.audio_url) {
       // Audio is ready - show player
       audioPlayer.classList.remove('hidden');
       audioGenerating.classList.add('hidden');
+      audioGenerateSection.classList.add('hidden');
       this.initAudio(save.audio_url);
     } else if (save.content && save.content.length > 100 && !save.highlight) {
-      // Content exists but no audio yet - show generating indicator
+      // Content exists but no audio yet - show generate button
       audioPlayer.classList.add('hidden');
-      audioGenerating.classList.remove('hidden');
+      audioGenerating.classList.add('hidden');
+      audioGenerateSection.classList.remove('hidden');
     } else {
       // No audio applicable (highlights, short content)
       audioPlayer.classList.add('hidden');
       audioGenerating.classList.add('hidden');
+      audioGenerateSection.classList.add('hidden');
     }
 
     if (save.highlight) {
@@ -1066,6 +1074,22 @@ class StashApp {
   }
 
   // Audio player methods
+  async generateAudio() {
+    if (!this.currentSave) return;
+
+    const audioGenerateSection = document.getElementById('audio-generate-section');
+    const audioGenerating = document.getElementById('audio-generating');
+
+    // Hide button, show generating indicator
+    audioGenerateSection.classList.add('hidden');
+    audioGenerating.classList.remove('hidden');
+
+    // In a real implementation, this would trigger audio generation
+    // For now, we just show the generating state
+    // The actual generation would be handled by a backend service
+    // and would update the save.audio_url when complete
+  }
+
   async initAudio(url) {
     this.stopAudio();
 

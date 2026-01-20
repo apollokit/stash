@@ -993,6 +993,16 @@ input, select {
   cursor: pointer;
 }
 
+.audio-generate-section {
+  margin-bottom: 20px;
+}
+
+.audio-generate-section .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .audio-generating {
   display: flex;
   align-items: center;
