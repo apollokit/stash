@@ -299,6 +299,10 @@ class StashApp {
     });
 
     // Context menu
+    document.getElementById('context-move-to-folder').addEventListener('mouseenter', () => {
+      this.showFolderSubmenu();
+    });
+
     document.getElementById('context-remove-from-folder').addEventListener('click', (e) => {
       e.stopPropagation();
       this.contextMenuRemoveFromFolder();
@@ -306,15 +310,14 @@ class StashApp {
 
     // Close context menu when clicking anywhere
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('#context-menu')) {
+      if (!e.target.closest('#context-menu') && !e.target.closest('#context-folder-submenu')) {
         this.hideContextMenu();
       }
     });
 
-    // Prevent default context menu
+    // Prevent default context menu on save cards
     document.addEventListener('contextmenu', (e) => {
-      // Only prevent default on save cards when in folder view
-      if (this.currentFolder && e.target.closest('.save-card')) {
+      if (e.target.closest('.save-card')) {
         e.preventDefault();
       }
     });
@@ -512,17 +515,15 @@ class StashApp {
         if (save) this.openReadingPane(save);
       });
 
-      // Bind right-click for context menu when in folder view
-      if (this.currentFolder) {
-        card.addEventListener('contextmenu', (e) => {
-          e.preventDefault();
-          const id = card.dataset.id;
-          const save = this.saves.find(s => s.id === id);
-          if (save) {
-            this.showContextMenu(e, save);
-          }
-        });
-      }
+      // Bind right-click for context menu on all cards
+      card.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const id = card.dataset.id;
+        const save = this.saves.find(s => s.id === id);
+        if (save) {
+          this.showContextMenu(e, save);
+        }
+      });
     });
   }
 
@@ -1249,6 +1250,22 @@ class StashApp {
   showContextMenu(e, save) {
     this.contextMenuSave = save;
     const menu = document.getElementById('context-menu');
+    const removeItem = document.getElementById('context-remove-from-folder');
+
+    // Show/hide "Remove from folder" based on whether save has a folder
+    if (save.folder_id) {
+      removeItem.classList.remove('hidden');
+
+      // Update text to include folder name
+      const folder = this.folders.find(f => f.id === save.folder_id);
+      const folderName = folder ? this.escapeHtml(folder.name) : 'folder';
+      const removeText = removeItem.querySelector('span');
+      if (removeText) {
+        removeText.textContent = `Remove from folder "${folderName}"`;
+      }
+    } else {
+      removeItem.classList.add('hidden');
+    }
 
     // Position the menu at cursor
     menu.style.left = `${e.pageX}px`;
@@ -1258,8 +1275,78 @@ class StashApp {
 
   hideContextMenu() {
     const menu = document.getElementById('context-menu');
+    const submenu = document.getElementById('context-folder-submenu');
     menu.classList.add('hidden');
+    submenu.classList.add('hidden');
     this.contextMenuSave = null;
+  }
+
+  showFolderSubmenu() {
+    const submenu = document.getElementById('context-folder-submenu');
+    const moveToFolderItem = document.getElementById('context-move-to-folder');
+
+    // Position submenu to the right of the menu item
+    const rect = moveToFolderItem.getBoundingClientRect();
+    submenu.style.left = `${rect.right + 4}px`;
+    submenu.style.top = `${rect.top}px`;
+
+    // Populate folders, excluding the current folder
+    let html = '';
+    const currentFolderId = this.contextMenuSave?.folder_id;
+    const availableFolders = this.folders.filter(f => f.id !== currentFolderId);
+
+    if (availableFolders.length === 0) {
+      html = '<div style="padding: 12px; text-align: center; color: var(--text-muted); font-size: 13px;">No other folders</div>';
+    } else {
+      html = availableFolders.map(folder => `
+        <div class="context-submenu-item" data-folder-id="${folder.id}">
+          <span style="color: ${folder.color}">📁</span>
+          <span>${this.escapeHtml(folder.name)}</span>
+        </div>
+      `).join('');
+    }
+
+    submenu.innerHTML = html;
+
+    // Bind click events
+    submenu.querySelectorAll('.context-submenu-item[data-folder-id]').forEach(item => {
+      item.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const folderId = item.dataset.folderId;
+        await this.contextMenuMoveToFolder(folderId);
+      });
+    });
+
+    submenu.classList.remove('hidden');
+  }
+
+  async contextMenuMoveToFolder(folderId) {
+    if (!this.contextMenuSave) return;
+
+    const { error } = await this.supabase
+      .from('saves')
+      .update({ folder_id: folderId })
+      .eq('id', this.contextMenuSave.id);
+
+    if (error) {
+      console.error('Error moving to folder:', error);
+      this.hideContextMenu();
+      return;
+    }
+
+    // If this is the currently open save, update it
+    if (this.currentSave?.id === this.contextMenuSave.id) {
+      this.currentSave.folder_id = folderId;
+      this.updateFolderButton();
+    }
+
+    // Hide context menu
+    this.hideContextMenu();
+
+    // If we're in a folder view, reload to show updated state
+    if (this.currentFolder) {
+      this.loadSaves();
+    }
   }
 
   async contextMenuRemoveFromFolder() {

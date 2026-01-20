@@ -2156,6 +2156,7 @@ input, select {
   font-size: 14px;
   color: var(--text);
   transition: background 0.15s;
+  position: relative;
 }
 
 .context-menu-item:hover {
@@ -2163,5 +2164,47 @@ input, select {
 }
 
 .context-menu-item svg {
+  flex-shrink: 0;
+}
+
+.context-menu-item .submenu-arrow {
+  margin-left: auto;
+}
+
+.context-submenu {
+  position: fixed;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  min-width: 180px;
+  max-width: 250px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 10001;
+  padding: 4px;
+}
+
+.context-submenu.hidden {
+  display: none;
+}
+
+.context-submenu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  transition: background 0.15s;
+}
+
+.context-submenu-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.context-submenu-item svg {
   flex-shrink: 0;
 }
