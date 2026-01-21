@@ -2,6 +2,10 @@
 
 Save pages to Stash from your iPhone's share sheet.
 
+Notes!
+1 Some. of the details here are wrong, look at ![alt text](shortcut_setup_kitiphone.PNG) in this dir for how it's supposed to be setup. The precise headers and reqquest details are correct though.
+2. This shortcut didn't work for me, because it doesn't have proper authentication. This only really works in single-user mode, which by default doesn't work in this repo because of how the row-level permissions were configured. So this approach doesn't work as-is.
+
 ## Setup
 
 1. Open the Shortcuts app on your iPhone
