@@ -46,7 +46,7 @@ const withShareExtensionInfoPlist = (config) => {
 
     config.modResults.CFBundleURLTypes.push({
       CFBundleURLSchemes: ['stash'],
-      CFBundleURLName: 'com.stash.mobile',
+      CFBundleURLName: config.ios?.bundleIdentifier || 'com.kitkennedy.stash',
     });
 
     return config;

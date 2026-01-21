@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.stash.mobile",
+      "bundleIdentifier": "com.kitkennedy.stash",
       "infoPlist": {
         "NSExtension": {
           "NSExtensionAttributes": {
@@ -30,7 +30,8 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.stash.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"

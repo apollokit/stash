@@ -57,7 +57,7 @@ This creates the `ios/` directory with native Xcode project files.
 
 1. Open the project in Xcode:
    ```bash
-   open ios/stashmobile.xcworkspace
+   open ios/Stash.xcworkspace
    ```
 
 2. In Xcode, click on the project in the left sidebar
@@ -68,13 +68,14 @@ This creates the `ios/` directory with native Xcode project files.
 
 5. Name it "StashShareExtension"
 
-6. Set the bundle identifier to: `com.stash.mobile.ShareExtension`
+6. Set the bundle identifier to: `com.kitkennedy.stash.ShareExtension`
+   (Or use your own bundle ID if you changed it: `<your-main-bundle-id>.ShareExtension`)
 
 7. Click Finish
 
 ### Step 3: Replace Share Extension Files
 
-1. In Xcode, navigate to the `StashShareExtension` folder in the project navigator
+1. In Xcode, navigate to the `StashShareExtension` folder in the project navigator (left sidebar)
 
 2. Delete the default `ShareViewController.swift` and `MainInterface.storyboard` files
 
@@ -82,7 +83,13 @@ This creates the `ios/` directory with native Xcode project files.
    - Copy `ios-share-extension/ShareViewController.swift` to the `StashShareExtension` folder
    - Copy `ios-share-extension/Info.plist` to replace the extension's Info.plist
 
-4. In the `ShareViewController.swift` file, make sure the class is set up correctly
+4. Verify the file setup:
+   - Select `ShareViewController.swift` in Xcode
+   - Open the File Inspector panel on the right (click the folder icon if not visible)
+   - Under "Target Membership", verify that:
+     - ✓ "StashShareExtension" is checked
+     - ✗ "Stash" (main app) is NOT checked
+   - The file should compile without errors (no red marks)
 
 ### Step 4: Configure App Groups (for data sharing)
 
@@ -94,9 +101,10 @@ Both the main app and the Share Extension need to share data using App Groups.
 
 3. Click "+ Capability" and add "App Groups"
 
-4. Create a new app group: `group.com.stash.mobile`
+4. Create a new app group: `group.com.kitkennedy.stash`
+   (Use the same format as your bundle ID: `group.<your-bundle-id>`)
 
-5. Repeat steps 1-4 for the Share Extension target
+5. Repeat steps 1-4 for the Share Extension target (use the same app group name)
 
 ### Step 5: Build and Run
 
