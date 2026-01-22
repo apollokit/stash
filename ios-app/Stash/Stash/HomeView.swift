@@ -125,12 +125,23 @@ struct HomeView: View {
                 }
                 .padding(.vertical)
             }
-            .navigationTitle("Stash")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color(hex: "121826"), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 8) {
+                        Image("StashIcon")
+                            .resizable()
+                            .frame(width: 28, height: 28)
+                            .cornerRadius(6)
+                        Text("Stash")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                }
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
                         if let email = supabase.currentUser?.email {
