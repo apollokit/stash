@@ -19,90 +19,101 @@ struct HomeView: View {
 
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Save Form
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("SAVE A PAGE")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.secondary)
-                            .tracking(0.5)
+            ZStack {
+                // Background color
+                Color(hex: "121826")
+                    .ignoresSafeArea()
 
-                        TextField("URL", text: $url)
-                            .textContentType(.URL)
-                            .autocapitalization(.none)
-                            .keyboardType(.URL)
-                            .textFieldStyle(.roundedBorder)
-
-                        TextField("Title", text: $title)
-                            .textFieldStyle(.roundedBorder)
-
-                        Button(action: { showFolderPicker = true }) {
-                            HStack {
-                                if let folder = selectedFolder {
-                                    Circle()
-                                        .fill(Color(hex: folder.color))
-                                        .frame(width: 12, height: 12)
-                                    Text("Save to \"\(folder.name)\"")
-                                } else {
-                                    Image(systemName: "folder")
-                                    Text("Save to folder (optional)")
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.down")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(.primary)
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(8)
-                        }
-
-                        if let error = errorMessage {
-                            Text(error)
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Save Form
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("SAVE A PAGE")
                                 .font(.caption)
-                                .foregroundColor(.red)
-                        }
+                                .fontWeight(.semibold)
+                                .foregroundColor(.gray)
+                                .tracking(0.5)
 
-                        Button(action: handleSave) {
-                            if isSaving {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .frame(maxWidth: .infinity)
-                            } else {
+                            TextField("URL", text: $url)
+                                .textContentType(.URL)
+                                .autocapitalization(.none)
+                                .keyboardType(.URL)
+                                .padding()
+                                .background(Color(hex: "384559"))
+                                .cornerRadius(8)
+                                .foregroundColor(.white)
+
+                            TextField("Title", text: $title)
+                                .padding()
+                                .background(Color(hex: "384559"))
+                                .cornerRadius(8)
+                                .foregroundColor(.white)
+
+                            Button(action: { showFolderPicker = true }) {
                                 HStack {
-                                    Image(systemName: "square.and.arrow.down")
-                                    Text("Save Page")
+                                    if let folder = selectedFolder {
+                                        Circle()
+                                            .fill(Color(hex: folder.color))
+                                            .frame(width: 12, height: 12)
+                                        Text("Save to \"\(folder.name)\"")
+                                    } else {
+                                        Image(systemName: "folder")
+                                        Text("Save to folder (optional)")
+                                    }
+                                    Spacer()
+                                    Image(systemName: "chevron.down")
+                                        .font(.caption)
                                 }
-                                .frame(maxWidth: .infinity)
+                                .foregroundColor(.white)
+                                .padding()
+                                .background(selectedFolder != nil ? Color(hex: "838CF1") : Color(hex: "404249"))
+                                .cornerRadius(8)
                             }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Color(red: 0.39, green: 0.40, blue: 0.95))
-                        .disabled(isSaving || url.isEmpty || title.isEmpty)
-                    }
-                    .padding()
-                    .background(Color(.systemBackground))
 
-                    Divider()
+                            if let error = errorMessage {
+                                Text(error)
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
+
+                            Button(action: handleSave) {
+                                if isSaving {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .frame(maxWidth: .infinity)
+                                } else {
+                                    HStack {
+                                        Image(systemName: "square.and.arrow.down")
+                                        Text("Save Page")
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(Color(hex: "838CF1"))
+                            .disabled(isSaving || url.isEmpty || title.isEmpty)
+                        }
+                        .padding()
+                        .background(Color(red: 0.15, green: 0.16, blue: 0.19))
+                        .cornerRadius(12)
 
                     // Recent Saves
                     VStack(alignment: .leading, spacing: 12) {
                         Text("RECENT SAVES")
                             .font(.caption)
                             .fontWeight(.semibold)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.gray)
                             .tracking(0.5)
                             .padding(.horizontal)
 
                         if isLoading {
                             ProgressView()
+                                .tint(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding()
                         } else if saves.isEmpty {
                             Text("No saves yet. Save your first page!")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(.gray)
                                 .frame(maxWidth: .infinity)
                                 .padding()
                         } else {
@@ -115,6 +126,10 @@ struct HomeView: View {
                 .padding(.vertical)
             }
             .navigationTitle("Stash")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(Color(hex: "121826"), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
@@ -126,6 +141,7 @@ struct HomeView: View {
                         }
                     } label: {
                         Image(systemName: "gearshape")
+                            .foregroundColor(.white)
                     }
                 }
             }
@@ -135,7 +151,9 @@ struct HomeView: View {
             .sheet(isPresented: $showFolderPicker) {
                 FolderSelector(folders: folders, selectedFolder: $selectedFolder)
             }
+            }
         }
+        .preferredColorScheme(.dark)
         .task {
             await loadData()
         }
@@ -201,33 +219,5 @@ struct HomeView: View {
         Task {
             try? await supabase.signOut()
         }
-    }
-}
-
-// Color extension to parse hex strings
-extension Color {
-    init(hex: String) {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (1, 1, 1, 0)
-        }
-
-        self.init(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue:  Double(b) / 255,
-            opacity: Double(a) / 255
-        )
     }
 }

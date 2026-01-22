@@ -9,7 +9,7 @@ struct SaveItemRow: View {
                 // Icon
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(save.isHighlight ? Color.yellow.opacity(0.2) : Color(.systemGray5))
+                        .fill(save.isHighlight ? Color.yellow.opacity(0.2) : Color(hex: "212936"))
                         .frame(width: 40, height: 40)
 
                     Text(save.isHighlight ? "✨" : "📄")
@@ -21,8 +21,8 @@ struct SaveItemRow: View {
                     Text(save.displayTitle)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
+                        .foregroundColor(.white)
+                        .lineLimit(2)
 
                     HStack(spacing: 4) {
                         if let siteName = save.siteName, !siteName.isEmpty {
@@ -32,14 +32,14 @@ struct SaveItemRow: View {
                         Text(save.formattedDate)
                     }
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.gray)
                 }
 
                 Spacer()
             }
             .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(8)
+            .background(Color(hex: "212936"))
+            .cornerRadius(12)
             .padding(.horizontal)
         }
         .buttonStyle(.plain)
