@@ -14,7 +14,12 @@ class SupabaseService: ObservableObject {
     private init() {
         self.client = SupabaseClient(
             supabaseURL: URL(string: Config.supabaseURL)!,
-            supabaseKey: Config.supabaseAnonKey
+            supabaseKey: Config.supabaseAnonKey,
+            options: .init(
+                auth: .init(
+                    emitLocalSessionAsInitialSession: true
+                )
+            )
         )
 
         // Listen for auth state changes
