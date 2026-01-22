@@ -19,13 +19,18 @@ class SupabaseService: ObservableObject {
 
         // Listen for auth state changes
         Task {
-            for await state in client.auth.authStateChanges {
-                if case .signedIn(let session) = state.event {
-                    self.currentUser = session.user
-                    self.isAuthenticated = true
-                } else {
+            for await (event, session) in client.auth.authStateChanges {
+                switch event {
+                case .signedIn:
+                    if let session = session {
+                        self.currentUser = session.user
+                        self.isAuthenticated = true
+                    }
+                case .signedOut:
                     self.currentUser = nil
                     self.isAuthenticated = false
+                default:
+                    break
                 }
             }
         }
@@ -64,16 +69,15 @@ class SupabaseService: ObservableObject {
     // MARK: - Saves
 
     func getRecentSaves(limit: Int = 20) async throws -> [Save] {
-        let response = try await client
+        let response: [Save] = try await client
             .from("saves")
             .select()
             .order("created_at", ascending: false)
             .limit(limit)
             .execute()
+            .value
 
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode([Save].self, from: response.data)
+        return response
     }
 
     func createSave(url: String, title: String, content: String? = nil, folderId: String? = nil) async throws -> Save {
@@ -94,33 +98,27 @@ class SupabaseService: ObservableObject {
             source: "ios"
         )
 
-        let encoder = JSONEncoder()
-        encoder.keyEncodingStrategy = .convertToSnakeCase
-        let requestData = try encoder.encode(request)
-
-        let response = try await client
+        let response: Save = try await client
             .from("saves")
-            .insert(requestData)
+            .insert(request)
             .select()
             .single()
             .execute()
+            .value
 
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode(Save.self, from: response.data)
+        return response
     }
 
     // MARK: - Folders
 
     func getFolders() async throws -> [Folder] {
-        let response = try await client
+        let response: [Folder] = try await client
             .from("folders")
             .select()
             .order("name", ascending: true)
             .execute()
+            .value
 
-        let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
-        return try decoder.decode([Folder].self, from: response.data)
+        return response
     }
 }

@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Auth
 
 struct HomeView: View {
     @EnvironmentObject var supabase: SupabaseService
