@@ -7,14 +7,14 @@ class ShareViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Extract the shared URL
+        // Extract the shared content
         guard let extensionItem = extensionContext?.inputItems.first as? NSExtensionItem,
               let itemProvider = extensionItem.attachments?.first else {
             closeExtension()
             return
         }
 
-        // Check if it's a URL
+        // Try URL first (Safari, Chrome, etc.)
         if itemProvider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
             itemProvider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] (url, error) in
                 guard let self = self,
@@ -29,9 +29,53 @@ class ShareViewController: UIViewController {
                 // Open the main app with the URL and title
                 self.openMainApp(url: shareURL.absoluteString, title: pageTitle)
             }
-        } else {
+        }
+        // Try plain text (apps that share text with URLs embedded)
+        else if itemProvider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+            itemProvider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] (text, error) in
+                guard let self = self else {
+                    return
+                }
+
+                guard let sharedText = text as? String else {
+                    self.closeExtension()
+                    return
+                }
+
+                // Extract URL from text using regex
+                if let extractedURL = self.extractURL(from: sharedText) {
+                    // Remove the URL from the text to create a cleaner title
+                    let cleanTitle = sharedText.replacingOccurrences(of: extractedURL, with: "").trimmingCharacters(in: .whitespacesAndNewlines)
+                    self.openMainApp(url: extractedURL, title: cleanTitle)
+                } else {
+                    // No URL found in text, close
+                    self.closeExtension()
+                }
+            }
+        }
+        else {
             closeExtension()
         }
+    }
+
+    private func extractURL(from text: String) -> String? {
+        // Regex pattern to match URLs
+        let pattern = "(https?://[^\\s]+)"
+
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            return nil
+        }
+
+        let range = NSRange(text.startIndex..., in: text)
+        guard let match = regex.firstMatch(in: text, options: [], range: range) else {
+            return nil
+        }
+
+        guard let urlRange = Range(match.range(at: 1), in: text) else {
+            return nil
+        }
+
+        return String(text[urlRange])
     }
 
     private func openMainApp(url: String, title: String) {
