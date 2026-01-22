@@ -1,79 +1,82 @@
 # Share Extension Setup
 
-After the main app works, add Safari sharing capability.
+> **Note:** This file is for historical reference only. The Share Extension is already configured in the Xcode project. See [QUICKSTART.md](QUICKSTART.md) to test it.
 
-## Step 1: Add Share Extension Target
+## Quick Start (New Users)
 
-1. In Xcode, select your project in the navigator
-2. Click the **+** button at the bottom of the TARGETS list
-3. Choose **iOS > Share Extension**
-4. Settings:
-   - Product Name: **StashShareExtension**
-   - Language: **Swift**
-   - Project: Stash
-   - Embed in Application: Stash
-5. Click **Finish**
-6. Click **Activate** when asked about the scheme
+The Share Extension is already fully configured and included in the Xcode project. Just build and run:
 
-## Step 2: Replace Share Extension Code
+```bash
+cd ios-app
+open Stash.xcodeproj
+# Press ⌘R to build and run
+```
 
-1. In the navigator, expand **StashShareExtension**
-2. Delete these files (Move to Trash):
-   - `ShareViewController.swift` (we'll replace it)
-   - `MainInterface.storyboard` (not needed)
+Then test it:
+1. Open Safari on your device
+2. Navigate to any webpage
+3. Tap Share → Stash
+4. App opens with URL pre-filled
 
-3. Add the new `ShareViewController.swift`:
-   - Right-click **StashShareExtension** folder
-   - New File > Swift File
-   - Name it `ShareViewController.swift`
-   - Copy the code from `ShareViewController.swift` in this directory
+That's it!
 
-## Step 3: Update Info.plist
+---
 
-1. Select **StashShareExtension** target
-2. Go to **Info** tab
-3. Expand **NSExtension > NSExtensionAttributes**
-4. Change **NSExtensionActivationRule** from `String` to `Dictionary`
-5. Add inside the dictionary:
-   - Key: `NSExtensionActivationSupportsWebURLWithMaxCount`
-   - Type: Number
-   - Value: `1`
+## Original Setup Instructions (Historical)
 
-## Step 4: Add URL Scheme to Main App
+This section documents how the Share Extension was originally configured. **You don't need to follow these steps** - they're kept here for reference only.
 
-1. Select the **Stash** target (main app)
-2. Go to **Info** tab
-3. Add a new row:
-   - Key: `URL types` (if not exists)
-   - Expand it and add item 0:
-     - URL Schemes: (add item 0): `stash`
-     - Identifier: `com.kitkennedy.StashApp`
+<details>
+<summary>Click to expand original setup instructions</summary>
 
-## Step 5: Share Config.swift
+### Add Share Extension Target
 
-The Share Extension needs access to your Supabase config:
+1. In Xcode, click + at bottom of TARGETS
+2. Choose: iOS > Share Extension
+3. Name: **StashShareExtension**
+4. Click Activate when prompted
 
-1. Select `Config.swift` in the main app
-2. In File Inspector (right panel), under **Target Membership**:
-   - ✓ Stash (already checked)
-   - ✓ StashShareExtension (check this too)
+### Configure Info.plist
 
-## Step 6: Build and Run
+The Share Extension's Info.plist is configured with:
+- `NSExtensionPrincipalClass`: `$(PRODUCT_MODULE_NAME).ShareViewController`
+- `NSExtensionActivationSupportsWebURLWithMaxCount`: `1`
+- `NSExtensionPointIdentifier`: `com.apple.share-services`
 
-1. Select the **Stash** scheme (not StashShareExtension)
-2. Run on your device (Command+R)
-3. Open Safari on your device
-4. Navigate to any webpage
-5. Tap Share button
-6. Scroll down and tap **Stash**
-7. The main app opens with URL pre-filled!
+### Add URL Scheme
+
+The main app's Info.plist is configured with:
+- URL Scheme: `stash`
+- Identifier: `com.kitkennedy.StashApp`
+
+This allows the Share Extension to deep link back to the main app.
+
+### Share Config.swift
+
+`Config.swift` has target membership for both:
+- ✓ Stash (main app)
+- ✓ StashShareExtension
+
+This allows both targets to access Supabase credentials.
+
+</details>
 
 ## How It Works
 
-1. User shares from Safari
-2. Share Extension receives the URL and title
-3. Extension creates a deep link: `stash://save?url=...&title=...`
-4. iOS opens the main Stash app
-5. App parses the deep link and pre-fills the save form
+The Share Extension flow:
 
-No manual copying needed - everything is in git!
+```
+Safari → User taps Share → Stash
+  ↓
+ShareViewController receives URL + title
+  ↓
+Creates deep link: stash://save?url=...&title=...
+  ↓
+Opens main Stash app
+  ↓
+HomeView.onOpenURL handles deep link
+  ↓
+Pre-fills save form with URL and title
+```
+
+All of this is already implemented and working in the project.

@@ -21,62 +21,59 @@ Native Swift/SwiftUI app for iPhone and iPad.
 - iOS device or simulator running iOS 16+
 - Supabase account (already configured)
 
-### Setup (5 minutes)
+### Setup (2 minutes)
 
-1. **Create Xcode Project**
-   - Follow [SETUP.md](SETUP.md) to create the project
-   - Add all `.swift` files to your project
-   - Add Supabase Swift package dependency
+1. **Open the Xcode Project**
+   ```bash
+   cd ios-app
+   open Stash.xcodeproj
+   ```
 
 2. **Run the App**
-   - Select your device in Xcode
+   - Select your device or simulator in Xcode
    - Press ⌘R
    - Sign in with your Supabase credentials
 
-3. **Add Share Extension** (optional, for Safari sharing)
-   - Follow [SHARE_EXTENSION_SETUP.md](SHARE_EXTENSION_SETUP.md)
-   - Allows sharing from Safari, News, any app with URLs
-
 ### That's It!
 
-No Metro bundler, no npm packages, no build configuration hell. Just pure Swift.
+The Xcode project is already configured with all source files and the Share Extension. No Metro bundler, no npm packages, no build configuration hell. Just pure Swift.
 
 ## Project Structure
 
 ```
 ios-app/
-├── Stash/                          # Main app (created by Xcode)
-│   ├── StashApp.swift              # App entry point
-│   ├── Config.swift                # Supabase config
-│   ├── Models.swift                # Data models (Save, Folder)
-│   ├── SupabaseService.swift       # API client
-│   ├── AuthView.swift              # Login/signup screen
-│   ├── HomeView.swift              # Main screen with save form
-│   ├── SaveItemRow.swift           # Save list item
-│   └── FolderSelector.swift        # Folder picker modal
-├── StashShareExtension/            # Share Extension (optional)
-│   └── ShareViewController.swift   # Handles Safari sharing
-├── SETUP.md                        # Setup instructions
-├── SHARE_EXTENSION_SETUP.md        # Share Extension guide
+├── Stash.xcodeproj/                # Xcode project (version controlled)
+├── Stash/                          # Main app target
+│   ├── Stash/
+│   │   ├── StashApp.swift          # App entry point
+│   │   ├── Config.swift            # Supabase config
+│   │   ├── Models.swift            # Data models (Save, Folder)
+│   │   ├── SupabaseService.swift   # API client
+│   │   ├── AuthView.swift          # Login/signup screen
+│   │   ├── HomeView.swift          # Main screen with save form
+│   │   ├── SaveItemRow.swift       # Save list item
+│   │   └── FolderSelector.swift    # Folder picker modal
+│   └── StashShareExtension/        # Share Extension target
+│       ├── ShareViewController.swift  # Handles Safari sharing
+│       └── Info.plist              # Extension configuration
+├── ARCHITECTURE.md                 # Architecture overview
+├── QUICKSTART.md                   # Quick start checklist
 └── README.md                       # This file
 ```
 
 ## Git Workflow
 
-Everything is version controlled:
+The entire Xcode project is version controlled:
 
 ```bash
-# Initial setup
-git add ios-app/
-git commit -m "Add native iOS app"
-git push
-
 # On a new machine
 git clone <repo>
 cd stash/ios-app
 open Stash.xcodeproj
-# Press Run - done!
+# Press ⌘R to build and run - done!
 ```
+
+All source files, project settings, and configurations are tracked in git. No manual setup required.
 
 ## Development
 
@@ -103,7 +100,7 @@ Share Extensions only work on **real devices**, not simulators:
 
 ## Configuration
 
-Supabase credentials are in `Config.swift`:
+Supabase credentials are in [Stash/Stash/Config.swift](Stash/Stash/Config.swift):
 
 ```swift
 enum Config {
@@ -137,15 +134,15 @@ For an iOS-only app, native is the way to go.
 
 ### Build Errors
 
-- Make sure Supabase package is added
 - Clean build folder: Product > Clean Build Folder (⇧⌘K)
 - Restart Xcode
+- Verify Supabase Swift package is properly linked
 
 ### Share Extension Not Appearing
 
 - Must build on real device (not simulator)
-- Check that URL scheme "stash" is configured
 - Force quit Safari and reopen
+- Check Settings → Safari → Extensions and enable Stash
 
 ### Authentication Issues
 
@@ -153,14 +150,6 @@ For an iOS-only app, native is the way to go.
 - Verify user exists in Supabase dashboard
 - Check internet connection
 
-## Next Steps
-
-1. Follow [SETUP.md](SETUP.md) to create the Xcode project
-2. Add Swift files to your project
-3. Run and test the app
-4. Add Share Extension following [SHARE_EXTENSION_SETUP.md](SHARE_EXTENSION_SETUP.md)
-5. Start saving articles!
-
 ## Support
 
-Everything you need is in this directory. No external dependencies except Supabase Swift package.
+Everything you need is in this directory. The Xcode project is fully configured and ready to run.

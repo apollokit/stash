@@ -1,8 +1,27 @@
 # Stash iOS App Setup
 
-This is a native Swift/SwiftUI app for iPhone and iPad.
+> **Note:** This file is for historical reference only. The Xcode project is already configured and ready to use. See [QUICKSTART.md](QUICKSTART.md) instead.
 
-## Quick Start
+## Quick Start (New Users)
+
+The Xcode project (`Stash.xcodeproj`) is already fully configured with all source files, the Share Extension, and dependencies.
+
+```bash
+cd ios-app
+open Stash.xcodeproj
+# Press ⌘R to build and run
+```
+
+That's it! No manual setup required.
+
+---
+
+## Original Setup Instructions (Historical)
+
+This section documents how the project was originally created. **You don't need to follow these steps** - they're kept here for reference only.
+
+<details>
+<summary>Click to expand original setup instructions</summary>
 
 ### 1. Create the Xcode Project
 
@@ -13,80 +32,29 @@ This is a native Swift/SwiftUI app for iPhone and iPad.
    - Product Name: **Stash**
    - Team: Your Apple Developer team
    - Organization Identifier: **com.kitkennedy**
-   - Bundle Identifier: **com.kitkennedy.StashApp** (auto-filled)
+   - Bundle Identifier: **com.kitkennedy.StashApp**
    - Interface: **SwiftUI**
    - Language: **Swift**
-   - Storage: **None**
-   - ✓ Include Tests: Uncheck
-5. Save location: **Select this `ios-app` directory**
-6. Create
+5. Save to `ios-app` directory
 
-### 2. Configure Project Settings
-
-1. Select the Stash project in the navigator
-2. Select the **Stash** target
-3. Under **Deployment Info**:
-   - ✓ Check both **iPhone** and **iPad**
-   - Minimum Deployments: **iOS 16.0**
-
-### 3. Add Swift Package Dependencies
+### 2. Add Supabase Package
 
 1. File > Add Package Dependencies
-2. Add Supabase:
-   - URL: `https://github.com/supabase/supabase-swift`
-   - Version: Up to Next Major Version (2.0.0)
-   - Add to target: Stash
+2. URL: `https://github.com/supabase/supabase-swift`
+3. Version: Up to Next Major (2.0.0)
+4. Add to target: Stash
 
-### 4. Copy Source Files
+### 3. Add Source Files
 
-Copy all the `.swift` files from this directory into your Xcode project:
-- Drag them into the Xcode navigator
-- ✓ Check "Copy items if needed"
-- ✓ Add to target: Stash
+All Swift files are already in the Xcode project structure:
+- `Stash/Stash/*.swift` - Main app files
+- `Stash/StashShareExtension/ShareViewController.swift` - Share Extension
 
-### 5. Update Config
+### 4. Configure Share Extension
 
-Edit `Config.swift` and add your Supabase credentials.
+The Share Extension target is already configured with:
+- Info.plist settings for URL handling
+- Deep link URL scheme (stash://)
+- Proper module naming for Swift classes
 
-### 6. Run
-
-Press ⌘R or click Run. The app should build and run on your device!
-
-## Adding Share Extension (Next Step)
-
-After the main app works, we'll add the Share Extension following `SHARE_EXTENSION_SETUP.md`.
-
-## Project Structure
-
-```
-ios-app/
-├── Stash/                    # Xcode creates this
-│   ├── StashApp.swift        # App entry point (replace with provided file)
-│   ├── Config.swift          # Supabase configuration (provided)
-│   ├── Models/
-│   │   └── Models.swift      # Data models (provided)
-│   ├── Services/
-│   │   └── SupabaseService.swift  # API service (provided)
-│   └── Views/
-│       ├── AuthView.swift         # Login/signup (provided)
-│       ├── HomeView.swift         # Main screen (provided)
-│       ├── SaveItemRow.swift      # List item (provided)
-│       └── FolderSelector.swift   # Folder picker (provided)
-└── StashShareExtension/      # Add later for Safari sharing
-```
-
-## Git Workflow
-
-Everything is tracked in git:
-```bash
-git add ios-app/
-git commit -m "Add native iOS app"
-```
-
-To clone and run on a new machine:
-```bash
-git clone <repo>
-cd stash/ios-app
-open Stash.xcodeproj
-# Press Run in Xcode
-```
+</details>

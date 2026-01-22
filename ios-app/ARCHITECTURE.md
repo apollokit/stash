@@ -79,46 +79,47 @@ Safari/Apps
 ## File Structure
 
 ```
-Stash/
-├── StashApp.swift              # Entry point
-│   └─→ Decides: AuthView or HomeView
+ios-app/
+├── Stash.xcodeproj/           # Xcode project (version controlled)
 │
-├── Models/
-│   └── Models.swift            # Data structures
-│       ├── Save               # Save model
-│       ├── Folder             # Folder model
-│       └── CreateSaveRequest  # API request model
-│
-├── Services/
-│   └── SupabaseService.swift  # API service (@MainActor)
-│       ├── @Published currentUser
-│       ├── @Published isAuthenticated
-│       ├── signIn/signUp/signOut
-│       ├── getRecentSaves()
-│       ├── createSave()
-│       └── getFolders()
-│
-├── Views/
-│   ├── AuthView.swift         # Login screen
+├── Stash/Stash/               # Main app target
+│   ├── StashApp.swift         # Entry point
+│   │   └─→ Decides: AuthView or HomeView
+│   │
+│   ├── Models.swift           # Data structures
+│   │   ├── Save              # Save model
+│   │   ├── Folder            # Folder model
+│   │   └── CreateSaveRequest # API request model
+│   │
+│   ├── SupabaseService.swift # API service (@MainActor)
+│   │   ├── @Published currentUser
+│   │   ├── @Published isAuthenticated
+│   │   ├── signIn/signUp/signOut
+│   │   ├── getRecentSaves()
+│   │   ├── createSave()
+│   │   └── getFolders()
+│   │
+│   ├── AuthView.swift        # Login screen
 │   │   └─→ Calls: supabase.signIn/signUp
 │   │
-│   ├── HomeView.swift         # Main screen
+│   ├── HomeView.swift        # Main screen
 │   │   ├─→ Save form
 │   │   ├─→ Folder selector
 │   │   ├─→ Recent saves list
 │   │   └─→ Deep link handler
 │   │
-│   ├── SaveItemRow.swift      # List item component
+│   ├── SaveItemRow.swift     # List item component
 │   │   └─→ Displays one save
 │   │
-│   └── FolderSelector.swift   # Folder picker modal
-│       └─→ Folder selection
+│   ├── FolderSelector.swift  # Folder picker modal
+│   │   └─→ Folder selection
+│   │
+│   └── Config.swift          # Supabase credentials
 │
-└── Config.swift               # Supabase credentials
-
-StashShareExtension/
-└── ShareViewController.swift  # Share Extension
-    └─→ Receives URL → Opens main app
+└── Stash/StashShareExtension/ # Share Extension target
+    ├── ShareViewController.swift  # Share Extension
+    │   └─→ Receives URL → Opens main app
+    └── Info.plist            # Extension configuration
 ```
 
 ## State Management
@@ -199,11 +200,12 @@ Everything else is pure SwiftUI and Foundation.
 ## Deployment
 
 For TestFlight/App Store:
-1. Archive build in Xcode
+1. Archive build in Xcode (Product > Archive)
 2. Upload to App Store Connect
 3. Submit for review
 
 For development:
-- Just run in Xcode
-- Everything tracked in git
-- Clone and run on any Mac
+- Open Stash.xcodeproj in Xcode
+- Press ⌘R to build and run
+- Entire project tracked in git
+- Clone and run on any Mac - no setup required

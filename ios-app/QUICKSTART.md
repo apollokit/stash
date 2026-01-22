@@ -1,96 +1,64 @@
-# Quick Start Checklist
+# Quick Start Guide
 
-Follow these steps in order to get Stash running on your iPhone/iPad.
+Get Stash running on your iPhone/iPad in 2 minutes.
 
-## Part 1: Main App (15 minutes)
+## Prerequisites
 
-### 1. Create Xcode Project
-- [ ] Open Xcode
-- [ ] File > New > Project
-- [ ] Choose: iOS > App
-- [ ] Product Name: **Stash**
-- [ ] Organization Identifier: **com.kitkennedy**
-- [ ] Interface: **SwiftUI**, Language: **Swift**
-- [ ] Save in: `ios-app` directory
-- [ ] ✓ Check both iPhone and iPad deployment
+- macOS with Xcode 15+
+- iOS device or simulator running iOS 16+
+- iPhone/iPad connected via USB (for device testing)
 
-### 2. Add Supabase Package
-- [ ] File > Add Package Dependencies
-- [ ] URL: `https://github.com/supabase/supabase-swift`
-- [ ] Version: Up to Next Major (2.0.0)
-- [ ] Add to target: Stash
+## Steps
 
-### 3. Add Swift Files
-Drag these files into Xcode (check "Copy items if needed"):
-- [ ] Config.swift
-- [ ] Models.swift
-- [ ] SupabaseService.swift
-- [ ] StashApp.swift (replace the default one)
-- [ ] AuthView.swift
-- [ ] HomeView.swift
-- [ ] SaveItemRow.swift
-- [ ] FolderSelector.swift
+### 1. Open the Project
 
-### 4. Run It!
-- [ ] Connect your iPhone/iPad via USB
-- [ ] Select your device in Xcode
-- [ ] Press ⌘R (or click Run)
-- [ ] Sign in with your Supabase account
-- [ ] Test saving a page
+```bash
+cd ios-app
+open Stash.xcodeproj
+```
 
-## Part 2: Share Extension (10 minutes)
+### 2. Select Your Device
 
-### 5. Add Share Extension Target
-- [ ] In Xcode, click + at bottom of TARGETS
-- [ ] Choose: iOS > Share Extension
-- [ ] Name: **StashShareExtension**
-- [ ] Click Activate when prompted
+- In Xcode, click the device dropdown in the toolbar
+- Choose your connected iPhone/iPad or a simulator
 
-### 6. Replace Share Extension Files
-- [ ] Delete `ShareViewController.swift` from extension (Move to Trash)
-- [ ] Delete `MainInterface.storyboard` (Move to Trash)
-- [ ] Add new `ShareViewController.swift` from ios-app folder
+### 3. Build and Run
 
-### 7. Configure Share Extension
-- [ ] Select StashShareExtension target
-- [ ] Go to Info tab
-- [ ] NSExtension > NSExtensionAttributes > NSExtensionActivationRule
-- [ ] Change from String to Dictionary
-- [ ] Add: `NSExtensionActivationSupportsWebURLWithMaxCount` = 1
+- Press ⌘R (or click the Play button)
+- App will install and launch on your device
+- Sign in with your Supabase credentials
 
-### 8. Add URL Scheme
-- [ ] Select Stash target (main app)
-- [ ] Go to Info tab
-- [ ] Add URL types > Item 0:
-  - URL Schemes: `stash`
-  - Identifier: `com.kitkennedy.stash`
+### 4. Test Share Extension (Real Device Only)
 
-### 9. Share Config.swift
-- [ ] Select `Config.swift` in navigator
-- [ ] File Inspector (right panel) > Target Membership
-- [ ] ✓ Check both Stash AND StashShareExtension
+Share extensions only work on physical devices, not simulators.
 
-### 10. Test It!
-- [ ] Build and run on device (⌘R)
-- [ ] Open Safari
-- [ ] Navigate to any webpage
-- [ ] Tap Share > Stash
-- [ ] Verify app opens with URL filled in!
+1. Open Safari on your device
+2. Navigate to any webpage
+3. Tap the Share button
+4. Scroll down and tap "Stash"
+5. The Stash app opens with URL and title pre-filled
+6. Tap "Save Page"
 
 ## Done! 🎉
 
-Your native iOS Stash app is ready. It works on both iPhone and iPad, and you can share from any app.
+Your native iOS Stash app is ready to use. You can:
+- Save pages manually in the app
+- Share from Safari using the Share Extension
+- Organize saves into folders
+- View your recent saves
+- Pull to refresh
 
 ## Troubleshooting
+
+**Share extension not appearing?**
+- Must use a real device (not simulator)
+- Force quit Safari and reopen
+- Check Settings → Safari → Extensions and enable Stash
 
 **Build errors?**
 - Product > Clean Build Folder (⇧⌘K)
 - Restart Xcode
 
-**Share extension not appearing?**
-- Must use real device (not simulator)
-- Force quit Safari and reopen
-
 **Can't sign in?**
-- Check Config.swift has your Supabase credentials
-- Verify internet connection
+- Check internet connection
+- Verify Supabase credentials in Config.swift
