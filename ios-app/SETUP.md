@@ -13,7 +13,7 @@ This is a native Swift/SwiftUI app for iPhone and iPad.
    - Product Name: **Stash**
    - Team: Your Apple Developer team
    - Organization Identifier: **com.kitkennedy**
-   - Bundle Identifier: **com.kitkennedy.stash** (auto-filled)
+   - Bundle Identifier: **com.kitkennedy.StashApp** (auto-filled)
    - Interface: **SwiftUI**
    - Language: **Swift**
    - Storage: **None**

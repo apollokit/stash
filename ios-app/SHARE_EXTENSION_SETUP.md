@@ -47,7 +47,7 @@ After the main app works, add Safari sharing capability.
    - Key: `URL types` (if not exists)
    - Expand it and add item 0:
      - URL Schemes: (add item 0): `stash`
-     - Identifier: `com.kitkennedy.stash`
+     - Identifier: `com.kitkennedy.StashApp`
 
 ## Step 5: Share Config.swift
 
