@@ -13,16 +13,78 @@
 		7BDE5E6C2F21BD80001E484B /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 7BDE5E6B2F21BD80001E484B /* Realtime */; };
 		7BDE5E6E2F21BD80001E484B /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 7BDE5E6D2F21BD80001E484B /* Storage */; };
 		7BDE5E702F21BD80001E484B /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 7BDE5E6F2F21BD80001E484B /* Supabase */; };
+		7BDE5E8F2F21DE67001E484B /* StashShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7BDE5E852F21DE67001E484B /* StashShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		7BDE5E8D2F21DE67001E484B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7BDE5E4E2F21BCE6001E484B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7BDE5E842F21DE67001E484B;
+			remoteInfo = StashShareExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		7BDE5E942F21DE67001E484B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				7BDE5E8F2F21DE67001E484B /* StashShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		7BDE5E562F21BCE6001E484B /* Stash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stash.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7BDE5E852F21DE67001E484B /* StashShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StashShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7BDE5E902F21DE67001E484B /* Exceptions for "StashShareExtension" folder in "StashShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7BDE5E842F21DE67001E484B /* StashShareExtension */;
+		};
+		7BDE5E982F21E3D9001E484B /* Exceptions for "Stash" folder in "Stash" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7BDE5E552F21BCE6001E484B /* Stash */;
+		};
+		7BDE5E9A2F21E416001E484B /* Exceptions for "Stash" folder in "StashShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Config.swift,
+			);
+			target = 7BDE5E842F21DE67001E484B /* StashShareExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7BDE5E582F21BCE6001E484B /* Stash */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7BDE5E982F21E3D9001E484B /* Exceptions for "Stash" folder in "Stash" target */,
+				7BDE5E9A2F21E416001E484B /* Exceptions for "Stash" folder in "StashShareExtension" target */,
+			);
 			path = Stash;
+			sourceTree = "<group>";
+		};
+		7BDE5E862F21DE67001E484B /* StashShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7BDE5E902F21DE67001E484B /* Exceptions for "StashShareExtension" folder in "StashShareExtension" target */,
+			);
+			path = StashShareExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -41,6 +103,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7BDE5E822F21DE67001E484B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -48,6 +117,7 @@
 			isa = PBXGroup;
 			children = (
 				7BDE5E582F21BCE6001E484B /* Stash */,
+				7BDE5E862F21DE67001E484B /* StashShareExtension */,
 				7BDE5E572F21BCE6001E484B /* Products */,
 			);
 			sourceTree = "<group>";
@@ -56,6 +126,7 @@
 			isa = PBXGroup;
 			children = (
 				7BDE5E562F21BCE6001E484B /* Stash.app */,
+				7BDE5E852F21DE67001E484B /* StashShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -70,10 +141,12 @@
 				7BDE5E522F21BCE6001E484B /* Sources */,
 				7BDE5E532F21BCE6001E484B /* Frameworks */,
 				7BDE5E542F21BCE6001E484B /* Resources */,
+				7BDE5E942F21DE67001E484B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				7BDE5E8E2F21DE67001E484B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				7BDE5E582F21BCE6001E484B /* Stash */,
@@ -91,6 +164,28 @@
 			productReference = 7BDE5E562F21BCE6001E484B /* Stash.app */;
 			productType = "com.apple.product-type.application";
 		};
+		7BDE5E842F21DE67001E484B /* StashShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7BDE5E912F21DE67001E484B /* Build configuration list for PBXNativeTarget "StashShareExtension" */;
+			buildPhases = (
+				7BDE5E812F21DE67001E484B /* Sources */,
+				7BDE5E822F21DE67001E484B /* Frameworks */,
+				7BDE5E832F21DE67001E484B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				7BDE5E862F21DE67001E484B /* StashShareExtension */,
+			);
+			name = StashShareExtension;
+			packageProductDependencies = (
+			);
+			productName = StashShareExtension;
+			productReference = 7BDE5E852F21DE67001E484B /* StashShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -103,6 +198,10 @@
 				TargetAttributes = {
 					7BDE5E552F21BCE6001E484B = {
 						CreatedOnToolsVersion = 26.2;
+					};
+					7BDE5E842F21DE67001E484B = {
+						CreatedOnToolsVersion = 26.2;
+						LastSwiftMigration = 2620;
 					};
 				};
 			};
@@ -124,12 +223,20 @@
 			projectRoot = "";
 			targets = (
 				7BDE5E552F21BCE6001E484B /* Stash */,
+				7BDE5E842F21DE67001E484B /* StashShareExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		7BDE5E542F21BCE6001E484B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7BDE5E832F21DE67001E484B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -146,7 +253,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		7BDE5E812F21DE67001E484B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		7BDE5E8E2F21DE67001E484B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7BDE5E842F21DE67001E484B /* StashShareExtension */;
+			targetProxy = 7BDE5E8D2F21DE67001E484B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		7BDE5E5F2F21BCE8001E484B /* Debug */ = {
@@ -280,6 +402,7 @@
 				DEVELOPMENT_TEAM = 3LVPC2QW4C;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Stash/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -312,6 +435,7 @@
 				DEVELOPMENT_TEAM = 3LVPC2QW4C;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Stash/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -327,6 +451,65 @@
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		7BDE5E922F21DE67001E484B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3LVPC2QW4C;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StashShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StashShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kitkennedy.StashApp.StashShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		7BDE5E932F21DE67001E484B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 3LVPC2QW4C;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StashShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StashShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kitkennedy.StashApp.StashShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
@@ -351,6 +534,15 @@
 			buildConfigurations = (
 				7BDE5E622F21BCE8001E484B /* Debug */,
 				7BDE5E632F21BCE8001E484B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7BDE5E912F21DE67001E484B /* Build configuration list for PBXNativeTarget "StashShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7BDE5E922F21DE67001E484B /* Debug */,
+				7BDE5E932F21DE67001E484B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
