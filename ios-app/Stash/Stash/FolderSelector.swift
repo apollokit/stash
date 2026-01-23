@@ -3,6 +3,7 @@ import SwiftUI
 struct FolderSelector: View {
     let folders: [Folder]
     @Binding var selectedFolder: Folder?
+    var onSelect: ((String?) -> Void)? = nil
 
     @Environment(\.dismiss) var dismiss
 
@@ -11,6 +12,7 @@ struct FolderSelector: View {
             List {
                 Button(action: {
                     selectedFolder = nil
+                    onSelect?(nil)
                     dismiss()
                 }) {
                     HStack {
@@ -26,6 +28,7 @@ struct FolderSelector: View {
                 ForEach(folders) { folder in
                     Button(action: {
                         selectedFolder = folder
+                        onSelect?(folder.id)
                         dismiss()
                     }) {
                         HStack(spacing: 12) {
@@ -46,7 +49,7 @@ struct FolderSelector: View {
                     .foregroundColor(.primary)
                 }
             }
-            .navigationTitle("Select Folder")
+            .navigationTitle("Select Folder (try again if empty)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

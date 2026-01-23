@@ -4,8 +4,8 @@
 - clean up the content section in cards
 - add handling for tags
 - add filtering by websites/domains
-- add ability to interact with cards in ios app
 - ability to add comments/notes to cards
 - improve functionality of search bar/filtering
 - in webapp make folders section collapsible
 - ability to automatically fetch relevant metadata for a card that's just a url (like a share from podcasts or youtube)
+- SaveItemRow.swift: NOTE: Known issue - folders array is empty on first open due to SwiftUI timing

@@ -114,6 +114,31 @@ class SupabaseService: ObservableObject {
         return response
     }
 
+    func deleteSave(id: String) async throws {
+        try await client
+            .from("saves")
+            .delete()
+            .eq("id", value: id)
+            .execute()
+    }
+
+    func toggleFavorite(saveId: String, currentValue: Bool) async throws {
+        try await client
+            .from("saves")
+            .update(["is_favorite": !currentValue])
+            .eq("id", value: saveId)
+            .execute()
+    }
+
+    func moveSaveToFolder(saveId: String, folderId: String?) async throws {
+        let update: [String: AnyJSON] = ["folder_id": folderId.map { .string($0) } ?? .null]
+        try await client
+            .from("saves")
+            .update(update)
+            .eq("id", value: saveId)
+            .execute()
+    }
+
     // MARK: - Folders
 
     func getFolders() async throws -> [Folder] {

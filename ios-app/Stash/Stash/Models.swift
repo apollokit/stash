@@ -14,6 +14,7 @@ struct Save: Codable, Identifiable {
     let publishedAt: String?
     let imageUrl: String?
     let folderId: String?
+    let isFavorite: Bool
     let source: String
     let createdAt: Date
     let updatedAt: Date
@@ -31,6 +32,7 @@ struct Save: Codable, Identifiable {
         case publishedAt = "published_at"
         case imageUrl = "image_url"
         case folderId = "folder_id"
+        case isFavorite = "is_favorite"
         case source
         case createdAt = "created_at"
         case updatedAt = "updated_at"

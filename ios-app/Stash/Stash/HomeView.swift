@@ -118,7 +118,11 @@ struct HomeView: View {
                                 .padding()
                         } else {
                             ForEach(saves) { save in
-                                SaveItemRow(save: save)
+                                SaveItemRow(save: save) {
+                                    Task {
+                                        await loadData()
+                                    }
+                                }
                             }
                         }
                     }
