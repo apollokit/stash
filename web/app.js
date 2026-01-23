@@ -317,6 +317,11 @@ class StashApp {
       this.contextMenuRemoveFromFolder();
     });
 
+    document.getElementById('context-delete').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.contextMenuDelete();
+    });
+
     // Close context menu when clicking anywhere
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#context-menu') && !e.target.closest('#context-folder-submenu')) {
@@ -1612,6 +1617,38 @@ class StashApp {
     if (this.currentView === 'favorites' && !newValue) {
       this.loadSaves();
     }
+  }
+
+  async contextMenuDelete() {
+    if (!this.contextMenuSave) return;
+
+    if (!confirm('Delete this save? This cannot be undone.')) {
+      this.hideContextMenu();
+      return;
+    }
+
+    const { error } = await this.supabase
+      .from('saves')
+      .delete()
+      .eq('id', this.contextMenuSave.id);
+
+    if (error) {
+      console.error('Error deleting save:', error);
+      alert('Failed to delete save');
+      this.hideContextMenu();
+      return;
+    }
+
+    // If this is the currently open save, close the reading pane
+    if (this.currentSave?.id === this.contextMenuSave.id) {
+      this.closeReadingPane();
+    }
+
+    // Hide context menu
+    this.hideContextMenu();
+
+    // Reload saves to remove the item
+    this.loadSaves();
   }
 
   async showStats() {
