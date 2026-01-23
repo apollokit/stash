@@ -22,6 +22,30 @@ class ShareViewController: UIViewController {
 
         logger.info("Extension item found with \(extensionItem.attachments?.count ?? 0) attachments")
 
+        // Log all available metadata from the extension item
+        logger.info("=== Extension Item Metadata ===")
+        if let title = extensionItem.attributedTitle?.string {
+            logger.info("attributedTitle: \(title)")
+        } else {
+            logger.info("attributedTitle: nil")
+        }
+
+        if let contentText = extensionItem.attributedContentText?.string {
+            logger.info("attributedContentText: \(contentText)")
+        } else {
+            logger.info("attributedContentText: nil")
+        }
+
+        if let userInfo = extensionItem.userInfo {
+            logger.info("userInfo keys: \(Array(userInfo.keys))")
+            for (key, value) in userInfo {
+                logger.info("  userInfo[\(key)]: \(String(describing: value))")
+            }
+        } else {
+            logger.info("userInfo: nil")
+        }
+        logger.info("=== End Metadata ===")
+
         // Check all attachments
         guard let attachments = extensionItem.attachments, !attachments.isEmpty else {
             logger.error("No attachments found")
@@ -75,9 +99,19 @@ class ShareViewController: UIViewController {
 
             self.logger.info("handleURLShare: URL extracted: \(shareURL.absoluteString)")
 
-            // Get the title from the extension item
-            let pageTitle = extensionItem.attributedContentText?.string ?? shareURL.absoluteString
-            self.logger.info("handleURLShare: Title: \(pageTitle)")
+            // Try to get title from extension item metadata
+            var pageTitle = ""
+
+            // Check attributedContentText, but only use it if it's not just the URL
+            if let contentText = extensionItem.attributedContentText?.string,
+               !contentText.isEmpty,
+               contentText != shareURL.absoluteString,
+               !contentText.starts(with: "http://") && !contentText.starts(with: "https://") {
+                pageTitle = contentText
+                self.logger.info("handleURLShare: Using attributedContentText as title: \(pageTitle)")
+            } else {
+                self.logger.info("handleURLShare: No useful title found, leaving empty for user to fill")
+            }
 
             // Open the main app with the URL and title
             self.openMainApp(url: shareURL.absoluteString, title: pageTitle)

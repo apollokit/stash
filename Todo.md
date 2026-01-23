@@ -1,7 +1,3 @@
-- get other apps to work
-    - apple news
-    - podcasts
-    - youtube
 - fix ipad layout
 - add highlights share extension handling for ios
 - add an even simpler list view for cards in the webapp
@@ -12,3 +8,4 @@
 - ability to add comments/notes to cards
 - improve functionality of search bar/filtering
 - in webapp make folders section collapsible
+- ability to automatically fetch relevant metadata for a card that's just a url (like a share from podcasts or youtube)
