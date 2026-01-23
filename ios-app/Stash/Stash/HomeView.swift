@@ -99,12 +99,26 @@ struct HomeView: View {
 
                     // Recent Saves
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("RECENT SAVES")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.gray)
-                            .tracking(0.5)
-                            .padding(.horizontal)
+                        HStack {
+                            Text("RECENT SAVES")
+                                .font(.caption)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.gray)
+                                .tracking(0.5)
+
+                            Spacer()
+
+                            Button(action: {
+                                Task {
+                                    await loadData()
+                                }
+                            }) {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                        .padding(.horizontal)
 
                         if isLoading {
                             ProgressView()
@@ -202,8 +216,16 @@ struct HomeView: View {
 
             saves = try await savesRequest
             folders = try await foldersRequest
+            errorMessage = nil  // Clear any previous errors on success
         } catch {
-            errorMessage = "Failed to load: \(error.localizedDescription)"
+            // Check if this is a cancellation error (can come from different sources)
+            let errorDesc = error.localizedDescription.lowercased()
+            if errorDesc.contains("cancel") {
+                // Refresh was cancelled by user gesture - this is normal, don't show error
+                print("Load cancelled by user: \(error)")
+            } else {
+                errorMessage = "Failed to load: \(error.localizedDescription)"
+            }
         }
         isLoading = false
     }
