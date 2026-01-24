@@ -1,5 +1,6 @@
-- fix ipad layout
 - add highlights share extension handling for ios
+- show favicons in cards
+- show favorites heart icon in ios cards
 - add an even simpler list view for cards in the webapp
 - clean up the content section in cards
 - add handling for tags

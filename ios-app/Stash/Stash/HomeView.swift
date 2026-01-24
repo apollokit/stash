@@ -182,6 +182,7 @@ struct HomeView: View {
             }
             }
         }
+        .navigationViewStyle(.stack)
         .preferredColorScheme(.dark)
         .task {
             await loadData()
