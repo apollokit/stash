@@ -151,4 +151,26 @@ class SupabaseService: ObservableObject {
 
         return response
     }
+
+    func createFolder(name: String, color: String) async throws -> Folder {
+        guard let user = currentUser else {
+            throw NSError(domain: "SupabaseService", code: 401, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
+        }
+
+        let request: [String: AnyJSON] = [
+            "user_id": .string(user.id.uuidString),
+            "name": .string(name),
+            "color": .string(color)
+        ]
+
+        let response: Folder = try await client
+            .from("folders")
+            .insert(request)
+            .select()
+            .single()
+            .execute()
+            .value
+
+        return response
+    }
 }

@@ -16,6 +16,9 @@ struct HomeView: View {
     @State private var isSaving = false
     @State private var errorMessage: String?
     @State private var showFolderPicker = false
+    @State private var showCreateFolder = false
+    @State private var newFolderName = ""
+    @State private var newFolderColor = "6366F1"
 
     var body: some View {
         NavigationView {
@@ -161,16 +164,23 @@ struct HomeView: View {
                 }
 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Menu {
-                        if let email = supabase.currentUser?.email {
-                            Text(email)
+                    HStack(spacing: 16) {
+                        Button(action: { showCreateFolder = true }) {
+                            Image(systemName: "folder.badge.plus")
+                                .foregroundColor(.white)
                         }
-                        Button(role: .destructive, action: handleSignOut) {
-                            Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+
+                        Menu {
+                            if let email = supabase.currentUser?.email {
+                                Text(email)
+                            }
+                            Button(role: .destructive, action: handleSignOut) {
+                                Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                            }
+                        } label: {
+                            Image(systemName: "gearshape")
+                                .foregroundColor(.white)
                         }
-                    } label: {
-                        Image(systemName: "gearshape")
-                            .foregroundColor(.white)
                     }
                 }
             }
@@ -179,6 +189,53 @@ struct HomeView: View {
             }
             .sheet(isPresented: $showFolderPicker) {
                 FolderSelector(folders: folders, selectedFolder: $selectedFolder)
+            }
+            .sheet(isPresented: $showCreateFolder) {
+                NavigationView {
+                    Form {
+                        Section {
+                            TextField("Folder Name", text: $newFolderName)
+                        }
+
+                        Section {
+                            let colors = ["6366F1", "EC4899", "10B981", "F59E0B", "EF4444", "8B5CF6"]
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 50))], spacing: 16) {
+                                ForEach(colors, id: \.self) { colorHex in
+                                    Circle()
+                                        .fill(Color(hex: colorHex))
+                                        .frame(width: 50, height: 50)
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.white, lineWidth: newFolderColor == colorHex ? 3 : 0)
+                                        )
+                                        .onTapGesture {
+                                            newFolderColor = colorHex
+                                        }
+                                }
+                            }
+                            .padding(.vertical, 8)
+                        } header: {
+                            Text("Color")
+                        }
+                    }
+                    .navigationTitle("New Folder")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarLeading) {
+                            Button("Cancel") {
+                                showCreateFolder = false
+                                newFolderName = ""
+                                newFolderColor = "6366F1"
+                            }
+                        }
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Create") {
+                                createFolder()
+                            }
+                            .disabled(newFolderName.isEmpty)
+                        }
+                    }
+                }
             }
             }
         }
@@ -256,6 +313,20 @@ struct HomeView: View {
     private func handleSignOut() {
         Task {
             try? await supabase.signOut()
+        }
+    }
+
+    private func createFolder() {
+        Task {
+            do {
+                _ = try await supabase.createFolder(name: newFolderName, color: newFolderColor)
+                showCreateFolder = false
+                newFolderName = ""
+                newFolderColor = "6366F1"
+                await loadData()
+            } catch {
+                errorMessage = "Failed to create folder: \(error.localizedDescription)"
+            }
         }
     }
 }
