@@ -382,7 +382,7 @@ input, select {
   padding-right: 32px;
 }
 
-.folder-delete-btn {
+.folder-menu-btn {
   position: absolute;
   right: 8px;
   padding: 4px;
@@ -397,12 +397,45 @@ input, select {
   justify-content: center;
 }
 
-.folder-item:hover .folder-delete-btn {
+.folder-item:hover .folder-menu-btn {
   opacity: 1;
 }
 
-.folder-delete-btn:hover {
+.folder-menu-btn:hover {
+  color: var(--text);
+}
+
+.folder-context-menu {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: 140px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.folder-menu-item {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 14px;
+  transition: background-color 0.15s;
+}
+
+.folder-menu-item:hover {
+  background-color: var(--hover-bg);
+}
+
+.folder-menu-item.folder-menu-delete {
   color: var(--danger);
+}
+
+.folder-menu-item svg {
+  flex-shrink: 0;
 }
 
 .tags-cloud {

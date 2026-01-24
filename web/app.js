@@ -882,10 +882,11 @@ class StashApp {
           <span style="color: ${folder.color}">📁</span>
           ${this.escapeHtml(folder.name)}
         </a>
-        <button class="folder-delete-btn" data-folder-id="${folder.id}" title="Delete folder">
+        <button class="folder-menu-btn" data-folder-id="${folder.id}" title="Folder options">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="12" cy="5" r="1"></circle>
+            <circle cx="12" cy="19" r="1"></circle>
           </svg>
         </button>
       </div>
@@ -903,18 +904,96 @@ class StashApp {
       });
     });
 
-    // Bind click events for delete buttons
-    container.querySelectorAll('.folder-delete-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+    // Bind click events for folder menu buttons
+    container.querySelectorAll('.folder-menu-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
         e.stopPropagation();
         e.preventDefault();
         const folderId = btn.dataset.folderId;
         const folder = this.folders.find(f => f.id === folderId);
         if (folder) {
+          this.showFolderMenu(folder, btn);
+        }
+      });
+    });
+  }
+
+  showFolderMenu(folder, buttonElement) {
+    // Remove any existing menu
+    document.querySelectorAll('.folder-context-menu').forEach(m => m.remove());
+
+    const menu = document.createElement('div');
+    menu.className = 'folder-context-menu';
+    menu.innerHTML = `
+      <div class="folder-menu-item" data-action="rename">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        Rename
+      </div>
+      <div class="folder-menu-item folder-menu-delete" data-action="delete">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"></polyline>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        </svg>
+        Delete
+      </div>
+    `;
+
+    // Position menu near the button
+    const rect = buttonElement.getBoundingClientRect();
+    menu.style.position = 'fixed';
+    menu.style.top = `${rect.bottom + 5}px`;
+    menu.style.left = `${rect.left - 100}px`;
+
+    document.body.appendChild(menu);
+
+    // Handle menu item clicks
+    menu.querySelectorAll('.folder-menu-item').forEach(item => {
+      item.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const action = item.dataset.action;
+        menu.remove();
+
+        if (action === 'rename') {
+          await this.renameFolder(folder);
+        } else if (action === 'delete') {
           await this.deleteFolder(folder);
         }
       });
     });
+
+    // Close menu when clicking outside
+    const closeMenu = (e) => {
+      if (!menu.contains(e.target) && e.target !== buttonElement) {
+        menu.remove();
+        document.removeEventListener('click', closeMenu);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', closeMenu), 0);
+  }
+
+  async renameFolder(folder) {
+    const newName = prompt('Rename folder:', folder.name);
+    if (!newName || newName === folder.name) return;
+
+    const { error } = await this.supabase
+      .from('folders')
+      .update({ name: newName })
+      .eq('id', folder.id);
+
+    if (error) {
+      console.error('Error renaming folder:', error);
+      alert('Failed to rename folder');
+      return;
+    }
+
+    await this.loadFolders();
+    if (this.currentFolder?.id === folder.id) {
+      this.currentFolder.name = newName;
+      this.updateHeader();
+    }
   }
 
   setView(view) {
