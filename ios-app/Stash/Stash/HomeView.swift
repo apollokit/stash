@@ -2,12 +2,23 @@ import SwiftUI
 import Combine
 import Auth
 
+enum SavesViewMode: String, CaseIterable {
+    case recent = "Recent Saves"
+    case folders = "Folders"
+}
+
 struct HomeView: View {
     @EnvironmentObject var supabase: SupabaseService
 
     @State private var saves: [Save] = []
     @State private var folders: [Folder] = []
     @State private var selectedFolder: Folder?
+
+    // View mode for the saves list
+    @State private var viewMode: SavesViewMode = .recent
+    @State private var browsingFolder: Folder?
+    @State private var folderSaves: [Save] = []
+    @State private var isLoadingFolderSaves = false
 
     @State private var url = ""
     @State private var title = ""
@@ -100,20 +111,80 @@ struct HomeView: View {
                         .background(Color(red: 0.15, green: 0.16, blue: 0.19))
                         .cornerRadius(12)
 
-                    // Recent Saves
+                    // Saves List with View Mode Selector
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("RECENT SAVES")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.gray)
-                                .tracking(0.5)
+                            Menu {
+                                // Recent Saves option
+                                Button(action: {
+                                    viewMode = .recent
+                                    browsingFolder = nil
+                                    folderSaves = []
+                                }) {
+                                    HStack {
+                                        Text("Recent Saves")
+                                    }
+                                }
+
+                                // Folders submenu
+                                Menu {
+                                    if folders.isEmpty {
+                                        Text("No folders yet")
+                                    } else {
+                                        ForEach(folders) { folder in
+                                            Button(action: {
+                                                viewMode = .folders
+                                                browsingFolder = folder
+                                                Task {
+                                                    await loadFolderSaves(folderId: folder.id)
+                                                }
+                                            }) {
+                                                HStack {
+                                                    Circle()
+                                                        .fill(Color(hex: folder.color))
+                                                        .frame(width: 10, height: 10)
+                                                    Text(folder.name)
+                                                }
+                                            }
+                                        }
+                                    }
+                                } label: {
+                                    HStack {
+                                        Text("Folders")
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    if viewMode == .folders, let folder = browsingFolder {
+                                        Circle()
+                                            .fill(Color(hex: folder.color))
+                                            .frame(width: 8, height: 8)
+                                        Text(folder.name.uppercased())
+                                            .font(.caption)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.gray)
+                                            .tracking(0.5)
+                                    } else {
+                                        Text("RECENT SAVES")
+                                            .font(.caption)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.gray)
+                                            .tracking(0.5)
+                                    }
+                                    Image(systemName: "chevron.down")
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.gray)
+                                }
+                            }
 
                             Spacer()
 
                             Button(action: {
                                 Task {
                                     await loadData()
+                                    if viewMode == .folders, let folder = browsingFolder {
+                                        await loadFolderSaves(folderId: folder.id)
+                                    }
                                 }
                             }) {
                                 Image(systemName: "arrow.clockwise")
@@ -123,21 +194,47 @@ struct HomeView: View {
                         }
                         .padding(.horizontal)
 
-                        if isLoading {
-                            ProgressView()
-                                .tint(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                        } else if saves.isEmpty {
-                            Text("No saves yet. Save your first page!")
-                                .foregroundColor(.gray)
-                                .frame(maxWidth: .infinity)
-                                .padding()
+                        if viewMode == .folders {
+                            // Folder saves list
+                            if let folder = browsingFolder {
+                                if isLoadingFolderSaves {
+                                    ProgressView()
+                                        .tint(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                } else if folderSaves.isEmpty {
+                                    Text("No saves in this folder")
+                                        .foregroundColor(.gray)
+                                        .frame(maxWidth: .infinity)
+                                        .padding()
+                                } else {
+                                    ForEach(folderSaves) { save in
+                                        SaveItemRow(save: save) {
+                                            Task {
+                                                await loadFolderSaves(folderId: folder.id)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         } else {
-                            ForEach(saves) { save in
-                                SaveItemRow(save: save) {
-                                    Task {
-                                        await loadData()
+                            // Recent saves list
+                            if isLoading {
+                                ProgressView()
+                                    .tint(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                            } else if saves.isEmpty {
+                                Text("No saves yet. Save your first page!")
+                                    .foregroundColor(.gray)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                            } else {
+                                ForEach(saves) { save in
+                                    SaveItemRow(save: save) {
+                                        Task {
+                                            await loadData()
+                                        }
                                     }
                                 }
                             }
@@ -286,6 +383,19 @@ struct HomeView: View {
             }
         }
         isLoading = false
+    }
+
+    private func loadFolderSaves(folderId: String) async {
+        isLoadingFolderSaves = true
+        do {
+            folderSaves = try await supabase.getSavesByFolder(folderId: folderId)
+        } catch {
+            let errorDesc = error.localizedDescription.lowercased()
+            if !errorDesc.contains("cancel") {
+                errorMessage = "Failed to load folder saves: \(error.localizedDescription)"
+            }
+        }
+        isLoadingFolderSaves = false
     }
 
     private func handleSave() {

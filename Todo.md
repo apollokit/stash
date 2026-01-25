@@ -1,4 +1,3 @@
-- add a folders view in the ios app
 - SaveItemRow.swift: NOTE: Known issue - folders array is empty on first open due to SwiftUI timing
 - show favicons in cards
 - show favorites heart icon in ios cards
