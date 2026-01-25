@@ -7,7 +7,6 @@ struct SaveItemRow: View {
     @EnvironmentObject var supabase: SupabaseService
     @State private var showFolderPicker = false
     @State private var showDeleteConfirmation = false
-    @State private var folders: [Folder] = []
 
     var body: some View {
         Button(action: { openURL() }) {
@@ -57,15 +56,7 @@ struct SaveItemRow: View {
                 )
             }
 
-            Button(action: {
-                Task {
-                    print("📁 [SaveItemRow] Button tapped, loading folders...")
-                    await loadFolders()
-                    print("📁 [SaveItemRow] Folders loaded: \(folders.count)")
-                    showFolderPicker = true
-                    print("📁 [SaveItemRow] Sheet will open")
-                }
-            }) {
+            Button(action: { showFolderPicker = true }) {
                 Label("Move to folder", systemImage: "folder")
             }
 
@@ -82,13 +73,7 @@ struct SaveItemRow: View {
             Text("Are you sure you want to delete this save? This cannot be undone.")
         }
         .sheet(isPresented: $showFolderPicker) {
-            // NOTE: Known issue - folders array is empty on first open due to SwiftUI timing
-            // Works correctly on second open. Folders are loaded but sheet content evaluates before state updates.
-            let _ = print("📁 [SaveItemRow] Sheet building with folders count: \(folders.count)")
-            FolderSelector(
-                folders: folders,
-                selectedFolder: .constant(folders.first { $0.id == save.folderId })
-            ) { folderId in
+            FolderSelector(currentFolderId: save.folderId) { folderId in
                 moveToFolder(folderId)
             }
         }
@@ -97,18 +82,6 @@ struct SaveItemRow: View {
     private func openURL() {
         if let url = URL(string: save.url) {
             UIApplication.shared.open(url)
-        }
-    }
-
-    private func loadFolders() async {
-        print("📁 [SaveItemRow] loadFolders() starting...")
-        do {
-            let loadedFolders = try await supabase.getFolders()
-            print("📁 [SaveItemRow] API returned \(loadedFolders.count) folders")
-            folders = loadedFolders
-            print("📁 [SaveItemRow] State updated, folders.count = \(folders.count)")
-        } catch {
-            print("📁 [SaveItemRow] Error loading folders: \(error)")
         }
     }
 

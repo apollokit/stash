@@ -285,7 +285,13 @@ struct HomeView: View {
                 await loadData()
             }
             .sheet(isPresented: $showFolderPicker) {
-                FolderSelector(folders: folders, selectedFolder: $selectedFolder)
+                FolderSelector(currentFolderId: selectedFolder?.id) { folderId in
+                    if let folderId = folderId {
+                        selectedFolder = folders.first { $0.id == folderId }
+                    } else {
+                        selectedFolder = nil
+                    }
+                }
             }
             .sheet(isPresented: $showCreateFolder) {
                 NavigationView {

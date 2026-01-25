@@ -1,13 +1,12 @@
-- SaveItemRow.swift: NOTE: Known issue - folders array is empty on first open due to SwiftUI timing
+- clean up the content section in cards - what do I actually want in there?
+- ability to automatically fetch relevant metadata for a card that's just a url (like a share from podcasts or youtube)
 - show favicons in cards
+- ability to add comments/notes to cards
 - show favorites heart icon in ios cards
 - add an even simpler list view for cards in the webapp
-- clean up the content section in cards
 - add handling for tags
 - add filtering by websites/domains
-- ability to add comments/notes to cards
 - improve functionality of search bar/filtering
 - in webapp make folders section collapsible
-- ability to automatically fetch relevant metadata for a card that's just a url (like a share from podcasts or youtube)
 - use folder colors in the UI
 - add highlights share extension handling for ios (actually might not be possible - not sure that safari shares both a url and the highlight text to Stash)
