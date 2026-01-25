@@ -85,7 +85,7 @@ class SupabaseService: ObservableObject {
         return response
     }
 
-    func createSave(url: String, title: String, content: String? = nil, folderId: String? = nil) async throws -> Save {
+    func createSave(url: String, title: String, content: String? = nil, highlight: String? = nil, folderId: String? = nil) async throws -> Save {
         guard let user = currentUser else {
             throw NSError(domain: "SupabaseService", code: 401, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
         }
@@ -98,6 +98,7 @@ class SupabaseService: ObservableObject {
             url: url,
             title: title,
             content: content,
+            highlight: highlight,
             siteName: siteName,
             folderId: folderId,
             source: "ios"

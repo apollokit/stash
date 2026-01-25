@@ -84,6 +84,7 @@ struct CreateSaveRequest: Codable {
     let url: String
     let title: String
     let content: String?
+    let highlight: String?
     let siteName: String
     let folderId: String?
     let source: String
@@ -93,6 +94,7 @@ struct CreateSaveRequest: Codable {
         case url
         case title
         case content
+        case highlight
         case siteName = "site_name"
         case folderId = "folder_id"
         case source

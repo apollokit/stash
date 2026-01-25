@@ -11,6 +11,7 @@ struct HomeView: View {
 
     @State private var url = ""
     @State private var title = ""
+    @State private var highlight: String?
 
     @State private var isLoading = false
     @State private var isSaving = false
@@ -51,6 +52,41 @@ struct HomeView: View {
                                 .background(Color(hex: "384559"))
                                 .cornerRadius(8)
                                 .foregroundColor(.white)
+
+                            // Highlight preview card
+                            if let highlightText = highlight {
+                                HStack(alignment: .top, spacing: 12) {
+                                    Text("✨")
+                                        .font(.title2)
+
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Highlighted text")
+                                            .font(.caption)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.gray)
+                                            .tracking(0.5)
+
+                                        Text(highlightText)
+                                            .font(.subheadline)
+                                            .foregroundColor(Color(hex: "1F2937"))
+                                            .lineLimit(4)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+
+                                    Spacer()
+
+                                    Button(action: {
+                                        highlight = nil
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.gray)
+                                            .imageScale(.medium)
+                                    }
+                                }
+                                .padding()
+                                .background(Color(hex: "FEF3C7"))
+                                .cornerRadius(8)
+                            }
 
                             Button(action: { showFolderPicker = true }) {
                                 HStack {
@@ -250,7 +286,7 @@ struct HomeView: View {
     }
 
     private func handleDeepLink(_ url: URL) {
-        // Parse URL: stash://save?url=...&title=...
+        // Parse URL: stash://save?url=...&title=...&highlight=...
         guard url.scheme == "stash",
               url.host == "save",
               let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
@@ -258,11 +294,17 @@ struct HomeView: View {
             return
         }
 
-        // Extract URL and title from query parameters
+        // Extract URL, title, and highlight from query parameters
         if let urlParam = queryItems.first(where: { $0.name == "url" })?.value,
            let titleParam = queryItems.first(where: { $0.name == "title" })?.value {
             self.url = urlParam
             self.title = titleParam
+
+            // Extract highlight if present
+            if let highlightParam = queryItems.first(where: { $0.name == "highlight" })?.value,
+               !highlightParam.isEmpty {
+                self.highlight = highlightParam
+            }
         }
     }
 
@@ -297,10 +339,13 @@ struct HomeView: View {
                 _ = try await supabase.createSave(
                     url: url,
                     title: title,
+                    content: nil,
+                    highlight: highlight,
                     folderId: selectedFolder?.id
                 )
                 url = ""
                 title = ""
+                highlight = nil
                 selectedFolder = nil
                 await loadData()
             } catch {
