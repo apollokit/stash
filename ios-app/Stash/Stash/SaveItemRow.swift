@@ -70,6 +70,13 @@ struct SaveItemRow: View {
 
                 Spacer()
 
+                // Favorite indicator
+                if save.isFavorite {
+                    Image(systemName: "heart.fill")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
+
                 // Thumbnail if image available
                 if let imageUrl = save.imageUrl, let url = URL(string: imageUrl) {
                     AsyncImage(url: url) { phase in
