@@ -1,9 +1,8 @@
 - ability to add comments/notes to cards
-- show favorites heart icon in ios cards
-- add an even simpler list view for cards in the webapp
 - add handling for tags
 - add filtering by websites/domains
 - improve functionality of search bar/filtering
 - in webapp make folders section collapsible
 - use folder colors in the UI
 - add highlights share extension handling for ios (actually might not be possible - not sure that safari shares both a url and the highlight text to Stash)
+    - specifically for podcasts app

@@ -14,7 +14,9 @@ struct HomeView: View {
     @State private var folders: [Folder] = []
     @State private var selectedFolder: Folder?
 
-    // View mode for the saves list
+    // View mode for the saves list (persisted)
+    @AppStorage("savesViewMode") private var savedViewMode: String = "recent"
+    @AppStorage("browsingFolderId") private var savedFolderId: String = ""
     @State private var viewMode: SavesViewMode = .recent
     @State private var browsingFolder: Folder?
     @State private var folderSaves: [Save] = []
@@ -118,6 +120,8 @@ struct HomeView: View {
                                 // Recent Saves option
                                 Button(action: {
                                     viewMode = .recent
+                                    savedViewMode = "recent"
+                                    savedFolderId = ""
                                     browsingFolder = nil
                                     folderSaves = []
                                 }) {
@@ -134,6 +138,8 @@ struct HomeView: View {
                                         ForEach(folders) { folder in
                                             Button(action: {
                                                 viewMode = .folders
+                                                savedViewMode = "folders"
+                                                savedFolderId = folder.id
                                                 browsingFolder = folder
                                                 Task {
                                                     await loadFolderSaves(folderId: folder.id)
@@ -346,6 +352,14 @@ struct HomeView: View {
         .preferredColorScheme(.dark)
         .task {
             await loadData()
+            // Restore saved view mode
+            if savedViewMode == "folders" && !savedFolderId.isEmpty {
+                if let folder = folders.first(where: { $0.id == savedFolderId }) {
+                    viewMode = .folders
+                    browsingFolder = folder
+                    await loadFolderSaves(folderId: folder.id)
+                }
+            }
         }
         .onOpenURL { url in
             handleDeepLink(url)
