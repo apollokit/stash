@@ -151,6 +151,50 @@ class SupabaseService: ObservableObject {
             .execute()
     }
 
+    func updateSaveImageUrl(saveId: String, imageUrl: String) async throws {
+        try await client
+            .from("saves")
+            .update(["image_url": imageUrl])
+            .eq("id", value: saveId)
+            .execute()
+    }
+
+    // MARK: - Metadata Fetching
+
+    func fetchAndUpdateMetadata(saveId: String, pageUrl: String) async {
+        guard let url = URL(string: pageUrl) else { return }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            guard let html = String(data: data, encoding: .utf8) else { return }
+
+            if let imageUrl = extractOGImage(from: html) {
+                try await updateSaveImageUrl(saveId: saveId, imageUrl: imageUrl)
+            }
+        } catch {
+            print("Error fetching metadata: \(error)")
+        }
+    }
+
+    private func extractOGImage(from html: String) -> String? {
+        // Look for og:image meta tag
+        // Pattern: <meta property="og:image" content="...">
+        let patterns = [
+            #"<meta[^>]+property=[\"']og:image[\"'][^>]+content=[\"']([^\"']+)[\"']"#,
+            #"<meta[^>]+content=[\"']([^\"']+)[\"'][^>]+property=[\"']og:image[\"']"#
+        ]
+
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+               let match = regex.firstMatch(in: html, options: [], range: NSRange(html.startIndex..., in: html)),
+               let range = Range(match.range(at: 1), in: html) {
+                return String(html[range])
+            }
+        }
+
+        return nil
+    }
+
     // MARK: - Folders
 
     func getFolders() async throws -> [Folder] {

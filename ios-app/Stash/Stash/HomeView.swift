@@ -408,9 +408,11 @@ struct HomeView: View {
         isSaving = true
         errorMessage = nil
 
+        let savedUrl = url  // Capture before clearing
+
         Task {
             do {
-                _ = try await supabase.createSave(
+                let newSave = try await supabase.createSave(
                     url: url,
                     title: title,
                     folderId: selectedFolder?.id
@@ -419,6 +421,17 @@ struct HomeView: View {
                 title = ""
                 selectedFolder = nil
                 await loadData()
+
+                // Fetch metadata in background (don't block UI)
+                Task.detached {
+                    await supabase.fetchAndUpdateMetadata(saveId: newSave.id, pageUrl: savedUrl)
+                    // Refresh data after metadata is fetched
+                    _ = await MainActor.run {
+                        Task {
+                            await loadData()
+                        }
+                    }
+                }
             } catch {
                 errorMessage = "Failed to save: \(error.localizedDescription)"
             }

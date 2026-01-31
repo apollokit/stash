@@ -9,17 +9,45 @@ struct SaveItemRow: View {
     @State private var showDeleteConfirmation = false
 
     var body: some View {
-        Button(action: { openURL() }) {
+        NavigationLink(destination: SaveDetailView(save: save, onUpdate: onUpdate)) {
             HStack(spacing: 12) {
-                // Icon
+                // Icon - favicon or highlight indicator
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(save.isHighlight ? Color.yellow.opacity(0.2) : Color(hex: "212936"))
-                        .frame(width: 40, height: 40)
-
-                    Text(save.isHighlight ? "✨" : "📄")
-                        .font(.title3)
+                    if save.isHighlight {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.yellow.opacity(0.2))
+                            .frame(width: 40, height: 40)
+                        Text("✨")
+                            .font(.title3)
+                    } else if let faviconURL = save.faviconURL {
+                        AsyncImage(url: faviconURL) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .frame(width: 32, height: 32)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                            default:
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color(hex: "212936"))
+                                    .frame(width: 40, height: 40)
+                                    .overlay(
+                                        Image(systemName: "globe")
+                                            .foregroundColor(.gray)
+                                    )
+                            }
+                        }
+                    } else {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(hex: "212936"))
+                            .frame(width: 40, height: 40)
+                            .overlay(
+                                Image(systemName: "globe")
+                                    .foregroundColor(.gray)
+                            )
+                    }
                 }
+                .frame(width: 40, height: 40)
 
                 // Content
                 VStack(alignment: .leading, spacing: 4) {
@@ -41,6 +69,22 @@ struct SaveItemRow: View {
                 }
 
                 Spacer()
+
+                // Thumbnail if image available
+                if let imageUrl = save.imageUrl, let url = URL(string: imageUrl) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 50, height: 50)
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                        default:
+                            EmptyView()
+                        }
+                    }
+                }
             }
             .padding()
             .background(Color(hex: "212936"))
@@ -58,6 +102,10 @@ struct SaveItemRow: View {
 
             Button(action: { showFolderPicker = true }) {
                 Label("Move to folder", systemImage: "folder")
+            }
+
+            Button(action: { openURL() }) {
+                Label("Open in Safari", systemImage: "safari")
             }
 
             Button(role: .destructive, action: { showDeleteConfirmation = true }) {

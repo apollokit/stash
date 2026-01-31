@@ -57,6 +57,11 @@ struct Save: Codable, Identifiable {
         formatter.dateStyle = .medium
         return formatter.string(from: createdAt)
     }
+
+    var faviconURL: URL? {
+        guard let siteName = siteName, !siteName.isEmpty else { return nil }
+        return URL(string: "https://www.google.com/s2/favicons?domain=\(siteName)&sz=64")
+    }
 }
 
 // MARK: - Folder Model

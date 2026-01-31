@@ -1,6 +1,3 @@
-- clean up the content section in cards - what do I actually want in there?
-- ability to automatically fetch relevant metadata for a card that's just a url (like a share from podcasts or youtube)
-- show favicons in cards
 - ability to add comments/notes to cards
 - show favorites heart icon in ios cards
 - add an even simpler list view for cards in the webapp
