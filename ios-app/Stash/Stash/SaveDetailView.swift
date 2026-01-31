@@ -9,6 +9,7 @@ struct SaveDetailView: View {
 
     @State private var showFolderPicker = false
     @State private var showDeleteConfirmation = false
+    @State private var currentFolder: Folder?
 
     var body: some View {
         ScrollView {
@@ -151,13 +152,20 @@ struct SaveDetailView: View {
 
                         Button(action: { showFolderPicker = true }) {
                             HStack {
-                                Image(systemName: "folder")
-                                Text("Move")
+                                if let folder = currentFolder {
+                                    Circle()
+                                        .fill(Color(hex: folder.color))
+                                        .frame(width: 10, height: 10)
+                                    Text(folder.name)
+                                } else {
+                                    Image(systemName: "folder")
+                                    Text("No folder")
+                                }
                             }
                             .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
-                        .tint(.gray)
+                        .tint(currentFolder != nil ? Color(hex: currentFolder!.color) : .gray)
                     }
 
                     Button(role: .destructive, action: { showDeleteConfirmation = true }) {
@@ -186,9 +194,25 @@ struct SaveDetailView: View {
             Text("Are you sure you want to delete this save? This cannot be undone.")
         }
         .sheet(isPresented: $showFolderPicker) {
-            FolderSelector(currentFolderId: save.folderId) { folderId in
+            FolderSelector(currentFolderId: currentFolder?.id ?? save.folderId) { folderId in
                 moveToFolder(folderId)
             }
+        }
+        .task {
+            await loadCurrentFolder()
+        }
+    }
+
+    private func loadCurrentFolder() async {
+        guard let folderId = save.folderId else {
+            currentFolder = nil
+            return
+        }
+        do {
+            let folders = try await supabase.getFolders()
+            currentFolder = folders.first { $0.id == folderId }
+        } catch {
+            print("Error loading folder: \(error)")
         }
     }
 
@@ -213,6 +237,13 @@ struct SaveDetailView: View {
         Task {
             do {
                 try await supabase.moveSaveToFolder(saveId: save.id, folderId: folderId)
+                // Update local folder state
+                if let folderId = folderId {
+                    let folders = try await supabase.getFolders()
+                    currentFolder = folders.first { $0.id == folderId }
+                } else {
+                    currentFolder = nil
+                }
                 onUpdate?()
             } catch {
                 print("Error moving to folder: \(error)")
