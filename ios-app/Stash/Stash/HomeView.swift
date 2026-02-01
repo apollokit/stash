@@ -164,14 +164,21 @@ struct HomeView: View {
 
                             // Main search bar (FTS)
                             HStack {
-                                Image(systemName: "magnifyingglass")
-                                    .foregroundColor(.gray)
+                                if isSearching {
+                                    ProgressView()
+                                        .tint(.gray)
+                                        .scaleEffect(0.8)
+                                } else {
+                                    Image(systemName: "magnifyingglass")
+                                        .foregroundColor(.gray)
+                                }
                                 TextField("Search titles, content, comments...", text: $searchQuery)
                                     .foregroundColor(.white)
+                                    .disabled(isSearching)
                                     .onSubmit {
                                         performSearch()
                                     }
-                                if !searchQuery.isEmpty {
+                                if !searchQuery.isEmpty && !isSearching {
                                     Button(action: { searchQuery = "" }) {
                                         Image(systemName: "xmark.circle.fill")
                                             .foregroundColor(.gray)
@@ -210,6 +217,9 @@ struct HomeView: View {
                                         TextField("e.g. economist.com", text: $searchUrlFilter)
                                             .foregroundColor(.white)
                                             .autocapitalization(.none)
+                                            .onSubmit {
+                                                performSearch()
+                                            }
                                         if !searchUrlFilter.isEmpty {
                                             Button(action: { searchUrlFilter = "" }) {
                                                 Image(systemName: "xmark.circle.fill")
@@ -312,24 +322,6 @@ struct HomeView: View {
                                 }
                                 .padding(.top, 8)
                             }
-
-                            // Search button
-                            Button(action: performSearch) {
-                                if isSearching {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .frame(maxWidth: .infinity)
-                                } else {
-                                    HStack {
-                                        Image(systemName: "magnifyingglass")
-                                        Text("Search")
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                }
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(Color(hex: "838CF1"))
-                            .disabled(isSearching || (searchQuery.isEmpty && searchUrlFilter.isEmpty))
                         }
                         .padding()
                         .background(Color(red: 0.15, green: 0.16, blue: 0.19))
