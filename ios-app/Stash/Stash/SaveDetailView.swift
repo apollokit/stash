@@ -11,6 +11,7 @@ struct SaveDetailView: View {
     @State private var showDeleteConfirmation = false
     @State private var currentFolder: Folder?
     @State private var editableTitle: String = ""
+    @State private var showCopiedToast = false
     @FocusState private var isTitleFocused: Bool
 
     var body: some View {
@@ -89,11 +90,18 @@ struct SaveDetailView: View {
                             .foregroundColor(.gray)
                     }
 
-                    // URL
+                    // URL (long press to copy)
                     Text(save.url)
                         .font(.caption)
                         .foregroundColor(Color(hex: "838CF1"))
                         .lineLimit(2)
+                        .onLongPressGesture {
+                            UIPasteboard.general.string = save.url
+                            showCopiedToast = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                                showCopiedToast = false
+                            }
+                        }
 
                     // Highlight preview
                     if let highlight = save.highlight, !highlight.isEmpty {
@@ -196,6 +204,24 @@ struct SaveDetailView: View {
             }
         }
         .background(Color(hex: "121826"))
+        .overlay {
+            if showCopiedToast {
+                VStack {
+                    Spacer()
+                    Text("Link copied")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color(hex: "838CF1"))
+                        .cornerRadius(20)
+                        .padding(.bottom, 40)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.easeInOut(duration: 0.2), value: showCopiedToast)
+            }
+        }
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color(hex: "121826"), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
