@@ -304,4 +304,88 @@ class SupabaseService: ObservableObject {
 
         return publicURL.absoluteString
     }
+
+    // MARK: - Search
+
+    struct SearchOptions {
+        var searchTitles: Bool = true
+        var searchUrls: Bool = true
+        var searchContent: Bool = true
+        var searchComments: Bool = true
+        var startDate: Date?
+        var endDate: Date?
+        var folderIds: [String]?
+    }
+
+    func searchSaves(query: String, options: SearchOptions) async throws -> [Save] {
+        guard !query.isEmpty else { return [] }
+
+        let searchPattern = "%\(query)%"
+        var saveIdsFromComments: Set<String> = []
+
+        // If searching comments, first find save_ids with matching comments
+        if options.searchComments {
+            let comments: [Comment] = try await client
+                .from("comments")
+                .select()
+                .ilike("content", pattern: searchPattern)
+                .execute()
+                .value
+            saveIdsFromComments = Set(comments.map { $0.saveId })
+        }
+
+        // Build the main saves query
+        var queryBuilder = client.from("saves").select()
+
+        // Build OR conditions for text search
+        var orConditions: [String] = []
+        if options.searchTitles {
+            orConditions.append("title.ilike.\(searchPattern)")
+        }
+        if options.searchUrls {
+            orConditions.append("url.ilike.\(searchPattern)")
+        }
+        if options.searchContent {
+            orConditions.append("content.ilike.\(searchPattern)")
+        }
+
+        // If we have comment matches, include those save IDs
+        if !saveIdsFromComments.isEmpty {
+            let idsString = saveIdsFromComments.map { "(\($0))" }.joined(separator: ",")
+            orConditions.append("id.in.\(idsString)")
+        }
+
+        // Apply text search filter (if any conditions)
+        if !orConditions.isEmpty {
+            queryBuilder = queryBuilder.or(orConditions.joined(separator: ","))
+        } else if saveIdsFromComments.isEmpty {
+            // No search fields selected and no comment matches
+            return []
+        }
+
+        // Apply date filters
+        if let startDate = options.startDate {
+            let formatter = ISO8601DateFormatter()
+            queryBuilder = queryBuilder.gte("created_at", value: formatter.string(from: startDate))
+        }
+        if let endDate = options.endDate {
+            let formatter = ISO8601DateFormatter()
+            // Add 1 day to include the entire end date
+            let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: endDate) ?? endDate
+            queryBuilder = queryBuilder.lt("created_at", value: formatter.string(from: endOfDay))
+        }
+
+        // Apply folder filter
+        if let folderIds = options.folderIds, !folderIds.isEmpty {
+            queryBuilder = queryBuilder.in("folder_id", values: folderIds)
+        }
+
+        // Execute and return
+        let response: [Save] = try await queryBuilder
+            .order("created_at", ascending: false)
+            .execute()
+            .value
+
+        return response
+    }
 }

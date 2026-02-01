@@ -26,6 +26,21 @@ struct HomeView: View {
     @State private var title = ""
     @State private var isSaveFormExpanded = false
 
+    // Search state
+    @State private var searchQuery = ""
+    @State private var isSearching = false
+    @State private var searchResults: [Save] = []
+    @State private var isSearchOptionsExpanded = false
+    @State private var searchTitles = true
+    @State private var searchUrls = true
+    @State private var searchContent = false
+    @State private var searchComments = false
+    @State private var searchStartDate: Date?
+    @State private var searchEndDate: Date?
+    @State private var searchFolderIds: Set<String> = []
+    @State private var showStartDatePicker = false
+    @State private var showEndDatePicker = false
+
     @State private var isLoading = false
     @State private var isSaving = false
     @State private var errorMessage: String?
@@ -129,6 +144,218 @@ struct HomeView: View {
                         .background(Color(red: 0.15, green: 0.16, blue: 0.19))
                         .cornerRadius(12)
 
+                        // Search Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Search bar
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.gray)
+                                TextField("Search saves...", text: $searchQuery)
+                                    .foregroundColor(.white)
+                                    .onSubmit {
+                                        performSearch()
+                                    }
+                                if !searchQuery.isEmpty {
+                                    Button(action: clearSearch) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.gray)
+                                    }
+                                }
+                            }
+                            .padding()
+                            .background(Color(hex: "384559"))
+                            .cornerRadius(8)
+
+                            // Search options toggle
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    isSearchOptionsExpanded.toggle()
+                                }
+                            }) {
+                                HStack {
+                                    Text("SEARCH OPTIONS")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.gray)
+                                        .tracking(0.5)
+                                    Spacer()
+                                    Image(systemName: isSearchOptionsExpanded ? "chevron.up" : "chevron.down")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                            }
+
+                            if isSearchOptionsExpanded {
+                                VStack(alignment: .leading, spacing: 16) {
+                                    // Search fields checkboxes
+                                    Text("Search in:")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+
+                                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                                        SearchCheckbox(label: "Titles", isChecked: $searchTitles)
+                                        SearchCheckbox(label: "URLs", isChecked: $searchUrls)
+                                        SearchCheckbox(label: "Content", isChecked: $searchContent)
+                                        SearchCheckbox(label: "Comments", isChecked: $searchComments)
+                                    }
+
+                                    Divider().background(Color.gray.opacity(0.3))
+
+                                    // Date filters
+                                    Text("Date range:")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+
+                                    HStack(spacing: 12) {
+                                        // Start date
+                                        Button(action: { showStartDatePicker = true }) {
+                                            HStack {
+                                                Image(systemName: "calendar")
+                                                if let date = searchStartDate {
+                                                    Text(date, style: .date)
+                                                } else {
+                                                    Text("Start date")
+                                                }
+                                            }
+                                            .font(.subheadline)
+                                            .foregroundColor(searchStartDate != nil ? .white : .gray)
+                                            .padding(10)
+                                            .frame(maxWidth: .infinity)
+                                            .background(Color(hex: "384559"))
+                                            .cornerRadius(6)
+                                        }
+
+                                        // End date
+                                        Button(action: { showEndDatePicker = true }) {
+                                            HStack {
+                                                Image(systemName: "calendar")
+                                                if let date = searchEndDate {
+                                                    Text(date, style: .date)
+                                                } else {
+                                                    Text("End date")
+                                                }
+                                            }
+                                            .font(.subheadline)
+                                            .foregroundColor(searchEndDate != nil ? .white : .gray)
+                                            .padding(10)
+                                            .frame(maxWidth: .infinity)
+                                            .background(Color(hex: "384559"))
+                                            .cornerRadius(6)
+                                        }
+                                    }
+
+                                    // Clear dates button
+                                    if searchStartDate != nil || searchEndDate != nil {
+                                        Button(action: {
+                                            searchStartDate = nil
+                                            searchEndDate = nil
+                                        }) {
+                                            Text("Clear dates")
+                                                .font(.caption)
+                                                .foregroundColor(Color(hex: "838CF1"))
+                                        }
+                                    }
+
+                                    Divider().background(Color.gray.opacity(0.3))
+
+                                    // Folder filter
+                                    Text("Folders:")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gray)
+
+                                    if folders.isEmpty {
+                                        Text("No folders")
+                                            .font(.caption)
+                                            .foregroundColor(.gray)
+                                    } else {
+                                        FlowLayout(spacing: 8) {
+                                            ForEach(folders) { folder in
+                                                FolderFilterChip(
+                                                    folder: folder,
+                                                    isSelected: searchFolderIds.contains(folder.id)
+                                                ) {
+                                                    if searchFolderIds.contains(folder.id) {
+                                                        searchFolderIds.remove(folder.id)
+                                                    } else {
+                                                        searchFolderIds.insert(folder.id)
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if !searchFolderIds.isEmpty {
+                                            Button(action: { searchFolderIds.removeAll() }) {
+                                                Text("Clear folder filter")
+                                                    .font(.caption)
+                                                    .foregroundColor(Color(hex: "838CF1"))
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding(.top, 8)
+                            }
+
+                            // Search button
+                            Button(action: performSearch) {
+                                if isSearching {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .frame(maxWidth: .infinity)
+                                } else {
+                                    HStack {
+                                        Image(systemName: "magnifyingglass")
+                                        Text("Search")
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(Color(hex: "838CF1"))
+                            .disabled(isSearching || searchQuery.isEmpty)
+                        }
+                        .padding()
+                        .background(Color(red: 0.15, green: 0.16, blue: 0.19))
+                        .cornerRadius(12)
+
+                    // Search Results or Saves List
+                    if !searchResults.isEmpty || (searchQuery.isEmpty == false && !isSearching) {
+                        // Search Results
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("SEARCH RESULTS")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.gray)
+                                    .tracking(0.5)
+
+                                Text("(\(searchResults.count))")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+
+                                Spacer()
+
+                                Button(action: clearSearch) {
+                                    Text("Clear")
+                                        .font(.caption)
+                                        .foregroundColor(Color(hex: "838CF1"))
+                                }
+                            }
+                            .padding(.horizontal)
+
+                            if searchResults.isEmpty {
+                                Text("No results found")
+                                    .foregroundColor(.gray)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                            } else {
+                                ForEach(searchResults) { save in
+                                    SaveItemRow(save: save) {
+                                        performSearch()
+                                    }
+                                }
+                            }
+                        }
+                    } else {
                     // Saves List with View Mode Selector
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
@@ -262,8 +489,23 @@ struct HomeView: View {
                             }
                         }
                     }
+                    } // End else (search results vs saves list)
                 }
                 .padding(.vertical)
+            }
+            .sheet(isPresented: $showStartDatePicker) {
+                DatePickerSheet(
+                    title: "Start Date",
+                    selectedDate: $searchStartDate,
+                    isPresented: $showStartDatePicker
+                )
+            }
+            .sheet(isPresented: $showEndDatePicker) {
+                DatePickerSheet(
+                    title: "End Date",
+                    selectedDate: $searchEndDate,
+                    isPresented: $showEndDatePicker
+                )
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color(hex: "121826"), for: .navigationBar)
@@ -489,6 +731,170 @@ struct HomeView: View {
                 await loadData()
             } catch {
                 errorMessage = "Failed to create folder: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private func performSearch() {
+        guard !searchQuery.isEmpty else { return }
+        isSearching = true
+
+        Task {
+            do {
+                let options = SupabaseService.SearchOptions(
+                    searchTitles: searchTitles,
+                    searchUrls: searchUrls,
+                    searchContent: searchContent,
+                    searchComments: searchComments,
+                    startDate: searchStartDate,
+                    endDate: searchEndDate,
+                    folderIds: searchFolderIds.isEmpty ? nil : Array(searchFolderIds)
+                )
+                searchResults = try await supabase.searchSaves(query: searchQuery, options: options)
+            } catch {
+                errorMessage = "Search failed: \(error.localizedDescription)"
+            }
+            isSearching = false
+        }
+    }
+
+    private func clearSearch() {
+        searchQuery = ""
+        searchResults = []
+    }
+}
+
+// MARK: - Helper Views
+
+struct SearchCheckbox: View {
+    let label: String
+    @Binding var isChecked: Bool
+
+    var body: some View {
+        Button(action: { isChecked.toggle() }) {
+            HStack(spacing: 8) {
+                Image(systemName: isChecked ? "checkmark.square.fill" : "square")
+                    .foregroundColor(isChecked ? Color(hex: "838CF1") : .gray)
+                Text(label)
+                    .font(.subheadline)
+                    .foregroundColor(.white)
+            }
+        }
+    }
+}
+
+struct FolderFilterChip: View {
+    let folder: Folder
+    let isSelected: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(Color(hex: folder.color))
+                    .frame(width: 8, height: 8)
+                Text(folder.name)
+                    .font(.caption)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(isSelected ? Color(hex: folder.color).opacity(0.3) : Color(hex: "384559"))
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(isSelected ? Color(hex: folder.color) : Color.clear, lineWidth: 1)
+            )
+        }
+        .foregroundColor(.white)
+    }
+}
+
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = FlowResult(in: proposal.width ?? 0, subviews: subviews, spacing: spacing)
+        return result.size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = FlowResult(in: bounds.width, subviews: subviews, spacing: spacing)
+        for (index, subview) in subviews.enumerated() {
+            subview.place(at: CGPoint(x: bounds.minX + result.positions[index].x,
+                                      y: bounds.minY + result.positions[index].y),
+                         proposal: .unspecified)
+        }
+    }
+
+    struct FlowResult {
+        var size: CGSize = .zero
+        var positions: [CGPoint] = []
+
+        init(in maxWidth: CGFloat, subviews: Subviews, spacing: CGFloat) {
+            var x: CGFloat = 0
+            var y: CGFloat = 0
+            var rowHeight: CGFloat = 0
+
+            for subview in subviews {
+                let size = subview.sizeThatFits(.unspecified)
+
+                if x + size.width > maxWidth && x > 0 {
+                    x = 0
+                    y += rowHeight + spacing
+                    rowHeight = 0
+                }
+
+                positions.append(CGPoint(x: x, y: y))
+                rowHeight = max(rowHeight, size.height)
+                x += size.width + spacing
+            }
+
+            self.size = CGSize(width: maxWidth, height: y + rowHeight)
+        }
+    }
+}
+
+struct DatePickerSheet: View {
+    let title: String
+    @Binding var selectedDate: Date?
+    @Binding var isPresented: Bool
+
+    @State private var tempDate = Date()
+
+    var body: some View {
+        NavigationView {
+            VStack {
+                DatePicker(
+                    title,
+                    selection: $tempDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .padding()
+
+                Spacer()
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Clear") {
+                        selectedDate = nil
+                        isPresented = false
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        selectedDate = tempDate
+                        isPresented = false
+                    }
+                }
+            }
+        }
+        .onAppear {
+            if let date = selectedDate {
+                tempDate = date
             }
         }
     }
