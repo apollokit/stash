@@ -16,6 +16,7 @@ struct CommentsSection: View {
     @State private var commentToDelete: Comment?
     @State private var showDeleteConfirmation = false
     @State private var errorMessage: String?
+    @State private var fullScreenImageUrl: URL?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -57,10 +58,16 @@ struct CommentsSection: View {
             } else {
                 VStack(spacing: 12) {
                     ForEach(comments) { comment in
-                        CommentRow(comment: comment) {
-                            commentToDelete = comment
-                            showDeleteConfirmation = true
-                        }
+                        CommentRow(
+                            comment: comment,
+                            onDelete: {
+                                commentToDelete = comment
+                                showDeleteConfirmation = true
+                            },
+                            onImageTap: { url in
+                                fullScreenImageUrl = url
+                            }
+                        )
                     }
                 }
             }
@@ -153,6 +160,16 @@ struct CommentsSection: View {
         .task {
             await loadComments()
         }
+        .fullScreenCover(isPresented: Binding(
+            get: { fullScreenImageUrl != nil },
+            set: { if !$0 { fullScreenImageUrl = nil } }
+        )) {
+            if let url = fullScreenImageUrl {
+                ZoomableImageView(url: url) {
+                    fullScreenImageUrl = nil
+                }
+            }
+        }
     }
 
     private func loadComments() async {
@@ -218,6 +235,7 @@ struct CommentsSection: View {
 struct CommentRow: View {
     let comment: Comment
     let onDelete: () -> Void
+    let onImageTap: (URL) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -238,10 +256,11 @@ struct CommentRow: View {
                     case .success(let image):
                         image
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(maxHeight: 200)
-                            .clipped()
+                            .aspectRatio(contentMode: .fit)
                             .cornerRadius(8)
+                            .onTapGesture {
+                                onImageTap(url)
+                            }
                     case .failure:
                         Rectangle()
                             .fill(Color(hex: "384559"))
@@ -296,5 +315,117 @@ struct CommentRow: View {
         }
 
         return attributedString
+    }
+}
+
+struct ZoomableImageView: View {
+    let url: URL
+    let onDismiss: () -> Void
+
+    @State private var scale: CGFloat = 1.0
+    @State private var lastScale: CGFloat = 1.0
+    @State private var offset: CGSize = .zero
+    @State private var lastOffset: CGSize = .zero
+    @State private var showHelp = false
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            AsyncImage(url: url) { phase in
+                switch phase {
+                case .empty:
+                    ProgressView()
+                        .tint(.white)
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .scaleEffect(scale)
+                        .offset(offset)
+                        .gesture(
+                            MagnificationGesture()
+                                .onChanged { value in
+                                    scale = lastScale * value
+                                }
+                                .onEnded { _ in
+                                    lastScale = scale
+                                    if scale < 1.0 {
+                                        withAnimation {
+                                            scale = 1.0
+                                            lastScale = 1.0
+                                            offset = .zero
+                                            lastOffset = .zero
+                                        }
+                                    }
+                                }
+                        )
+                        .simultaneousGesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    if scale > 1.0 {
+                                        offset = CGSize(
+                                            width: lastOffset.width + value.translation.width,
+                                            height: lastOffset.height + value.translation.height
+                                        )
+                                    }
+                                }
+                                .onEnded { _ in
+                                    lastOffset = offset
+                                }
+                        )
+                        .onTapGesture(count: 2) {
+                            withAnimation {
+                                if scale > 1.0 {
+                                    scale = 1.0
+                                    lastScale = 1.0
+                                    offset = .zero
+                                    lastOffset = .zero
+                                } else {
+                                    scale = 2.5
+                                    lastScale = 2.5
+                                }
+                            }
+                        }
+                case .failure:
+                    Image(systemName: "photo")
+                        .font(.largeTitle)
+                        .foregroundColor(.gray)
+                @unknown default:
+                    EmptyView()
+                }
+            }
+
+            // Top buttons
+            VStack {
+                HStack {
+                    Button(action: { showHelp = true }) {
+                        Image(systemName: "questionmark")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .padding(12)
+                            .background(Circle().fill(Color.black.opacity(0.5)))
+                    }
+                    Spacer()
+                    Button(action: onDismiss) {
+                        Image(systemName: "xmark")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .padding(12)
+                            .background(Circle().fill(Color.black.opacity(0.5)))
+                    }
+                }
+                .padding()
+                Spacer()
+            }
+        }
+        .alert("Image Controls", isPresented: $showHelp) {
+            Button("Got it", role: .cancel) {}
+        } message: {
+            Text("Pinch with two fingers to zoom in and out.\n\nDrag to pan when zoomed in.\n\nDouble-tap to toggle zoom.")
+        }
+        .tint(Color(hex: "838CF1"))
     }
 }
