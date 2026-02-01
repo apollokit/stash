@@ -159,6 +159,14 @@ class SupabaseService: ObservableObject {
             .execute()
     }
 
+    func updateSaveTitle(saveId: String, title: String) async throws {
+        try await client
+            .from("saves")
+            .update(["title": title])
+            .eq("id", value: saveId)
+            .execute()
+    }
+
     // MARK: - Metadata Fetching
 
     func fetchAndUpdateMetadata(saveId: String, pageUrl: String) async {

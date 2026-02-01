@@ -10,6 +10,8 @@ struct SaveDetailView: View {
     @State private var showFolderPicker = false
     @State private var showDeleteConfirmation = false
     @State private var currentFolder: Folder?
+    @State private var editableTitle: String = ""
+    @FocusState private var isTitleFocused: Bool
 
     var body: some View {
         ScrollView {
@@ -40,11 +42,20 @@ struct SaveDetailView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 12) {
-                    // Title
-                    Text(save.displayTitle)
+                    // Title (editable)
+                    TextField("Title", text: $editableTitle, axis: .vertical)
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
+                        .focused($isTitleFocused)
+                        .onChange(of: isTitleFocused) { _, focused in
+                            if !focused && editableTitle != save.title {
+                                updateTitle()
+                            }
+                        }
+                        .onSubmit {
+                            isTitleFocused = false
+                        }
 
                     // Site and date
                     HStack(spacing: 8) {
@@ -199,7 +210,24 @@ struct SaveDetailView: View {
             }
         }
         .task {
+            editableTitle = save.title
             await loadCurrentFolder()
+        }
+    }
+
+    private func updateTitle() {
+        guard !editableTitle.isEmpty else {
+            editableTitle = save.title  // Revert if empty
+            return
+        }
+        Task {
+            do {
+                try await supabase.updateSaveTitle(saveId: save.id, title: editableTitle)
+                onUpdate?()
+            } catch {
+                print("Error updating title: \(error)")
+                editableTitle = save.title  // Revert on error
+            }
         }
     }
 
