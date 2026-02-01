@@ -1,7 +1,3 @@
-- add search functionality in ios app
-- add sharing from podcasts app in ios
-- add highlights share extension handling for ios (actually might not be possible - not sure that safari shares both a url and the highlight text to Stash)
-    - specifically for podcasts app
 - make an even more collapsed view in webapp - just a list of links/titles
 - add favicons to timeline view in webapp
 - figure out how to "publish" the ios app
@@ -10,3 +6,4 @@
 - improve functionality of search bar/filtering
 - in webapp make folders section collapsible
 - use folder colors in the UI
+- add highlights share extension handling for ios (actually might not be possible - not sure that safari shares both a url and the highlight text to Stash)
