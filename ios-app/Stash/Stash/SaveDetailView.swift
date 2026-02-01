@@ -187,6 +187,10 @@ struct SaveDetailView: View {
                         .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
+
+                    // Comments section
+                    CommentsSection(saveId: save.id)
+                        .padding(.top, 24)
                 }
                 .padding()
             }

@@ -103,3 +103,46 @@ struct CreateSaveRequest: Codable {
         case source
     }
 }
+
+// MARK: - Comment Model
+struct Comment: Codable, Identifiable {
+    let id: String
+    let userId: String
+    let saveId: String
+    let content: String
+    let imageUrl: String?
+    let createdAt: Date
+    let updatedAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case userId = "user_id"
+        case saveId = "save_id"
+        case content
+        case imageUrl = "image_url"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+
+    var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: createdAt)
+    }
+}
+
+// MARK: - Create Comment Request
+struct CreateCommentRequest: Codable {
+    let userId: String
+    let saveId: String
+    let content: String
+    let imageUrl: String?
+
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case saveId = "save_id"
+        case content
+        case imageUrl = "image_url"
+    }
+}

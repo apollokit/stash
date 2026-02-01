@@ -213,3 +213,55 @@ create policy "Users can update own preferences" on user_preferences
 create trigger user_preferences_updated_at
   before update on user_preferences
   for each row execute function update_updated_at();
+
+-- Comments table (user notes on saves)
+create table comments (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  save_id uuid references saves(id) on delete cascade not null,
+  content text not null,
+  image_url text, -- optional uploaded image
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now()
+);
+
+-- Indexes for comments
+create index comments_save_id_idx on comments(save_id);
+create index comments_created_at_idx on comments(created_at);
+
+-- RLS for comments
+alter table comments enable row level security;
+
+create policy "Users can view own comments" on comments
+  for select using (auth.uid() = user_id);
+
+create policy "Users can insert own comments" on comments
+  for insert with check (auth.uid() = user_id);
+
+create policy "Users can update own comments" on comments
+  for update using (auth.uid() = user_id);
+
+create policy "Users can delete own comments" on comments
+  for delete using (auth.uid() = user_id);
+
+-- Trigger for updated_at
+create trigger comments_updated_at
+  before update on comments
+  for each row execute function update_updated_at();
+
+-- Storage bucket for comment images
+insert into storage.buckets (id, name, public)
+values ('comment-images', 'comment-images', true);
+
+-- Storage policies for comment images
+create policy "Users can upload comment images"
+on storage.objects for insert
+with check (bucket_id = 'comment-images' and auth.role() = 'authenticated');
+
+create policy "Anyone can view comment images"
+on storage.objects for select
+using (bucket_id = 'comment-images');
+
+create policy "Users can delete own comment images"
+on storage.objects for delete
+using (bucket_id = 'comment-images' and auth.uid()::text = (storage.foldername(name))[1]);

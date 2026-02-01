@@ -237,4 +237,71 @@ class SupabaseService: ObservableObject {
 
         return response
     }
+
+    // MARK: - Comments
+
+    func getComments(saveId: String, ascending: Bool = true) async throws -> [Comment] {
+        let response: [Comment] = try await client
+            .from("comments")
+            .select()
+            .eq("save_id", value: saveId)
+            .order("created_at", ascending: ascending)
+            .execute()
+            .value
+
+        return response
+    }
+
+    func createComment(saveId: String, content: String, imageUrl: String? = nil) async throws -> Comment {
+        guard let user = currentUser else {
+            throw NSError(domain: "SupabaseService", code: 401, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
+        }
+
+        let request = CreateCommentRequest(
+            userId: user.id.uuidString,
+            saveId: saveId,
+            content: content,
+            imageUrl: imageUrl
+        )
+
+        let response: Comment = try await client
+            .from("comments")
+            .insert(request)
+            .select()
+            .single()
+            .execute()
+            .value
+
+        return response
+    }
+
+    func deleteComment(id: String) async throws {
+        try await client
+            .from("comments")
+            .delete()
+            .eq("id", value: id)
+            .execute()
+    }
+
+    func uploadCommentImage(imageData: Data, saveId: String) async throws -> String {
+        guard let user = currentUser else {
+            throw NSError(domain: "SupabaseService", code: 401, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
+        }
+
+        let fileName = "\(user.id.uuidString)/\(saveId)/\(UUID().uuidString).jpg"
+
+        try await client.storage
+            .from("comment-images")
+            .upload(
+                fileName,
+                data: imageData,
+                options: .init(contentType: "image/jpeg")
+            )
+
+        let publicURL = try client.storage
+            .from("comment-images")
+            .getPublicURL(path: fileName)
+
+        return publicURL.absoluteString
+    }
 }
