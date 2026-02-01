@@ -24,6 +24,7 @@ struct HomeView: View {
 
     @State private var url = ""
     @State private var title = ""
+    @State private var isSaveFormExpanded = false
 
     @State private var isLoading = false
     @State private var isSaving = false
@@ -42,72 +43,87 @@ struct HomeView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Save Form
+                        // Save Form (collapsible)
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("SAVE A PAGE")
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.gray)
-                                .tracking(0.5)
-
-                            TextField("URL", text: $url)
-                                .textContentType(.URL)
-                                .autocapitalization(.none)
-                                .keyboardType(.URL)
-                                .padding()
-                                .background(Color(hex: "384559"))
-                                .cornerRadius(8)
-                                .foregroundColor(.white)
-
-                            TextField("Title", text: $title)
-                                .padding()
-                                .background(Color(hex: "384559"))
-                                .cornerRadius(8)
-                                .foregroundColor(.white)
-
-                            Button(action: { showFolderPicker = true }) {
+                            // Header - tap to toggle
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    isSaveFormExpanded.toggle()
+                                }
+                            }) {
                                 HStack {
-                                    if let folder = selectedFolder {
-                                        Circle()
-                                            .fill(Color(hex: folder.color))
-                                            .frame(width: 12, height: 12)
-                                        Text("Save to \"\(folder.name)\"")
-                                    } else {
-                                        Image(systemName: "folder")
-                                        Text("Save to folder (optional)")
-                                    }
-                                    Spacer()
-                                    Image(systemName: "chevron.down")
+                                    Text("SAVE A PAGE")
                                         .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.gray)
+                                        .tracking(0.5)
+                                    Spacer()
+                                    Image(systemName: isSaveFormExpanded ? "chevron.up" : "chevron.down")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
                                 }
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(selectedFolder != nil ? Color(hex: "838CF1") : Color(hex: "404249"))
-                                .cornerRadius(8)
                             }
 
-                            if let error = errorMessage {
-                                Text(error)
-                                    .font(.caption)
-                                    .foregroundColor(.red)
-                            }
+                            if isSaveFormExpanded {
+                                TextField("URL", text: $url)
+                                    .textContentType(.URL)
+                                    .autocapitalization(.none)
+                                    .keyboardType(.URL)
+                                    .padding()
+                                    .background(Color(hex: "384559"))
+                                    .cornerRadius(8)
+                                    .foregroundColor(.white)
 
-                            Button(action: handleSave) {
-                                if isSaving {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .frame(maxWidth: .infinity)
-                                } else {
+                                TextField("Title", text: $title)
+                                    .padding()
+                                    .background(Color(hex: "384559"))
+                                    .cornerRadius(8)
+                                    .foregroundColor(.white)
+
+                                Button(action: { showFolderPicker = true }) {
                                     HStack {
-                                        Image(systemName: "square.and.arrow.down")
-                                        Text("Save Page")
+                                        if let folder = selectedFolder {
+                                            Circle()
+                                                .fill(Color(hex: folder.color))
+                                                .frame(width: 12, height: 12)
+                                            Text("Save to \"\(folder.name)\"")
+                                        } else {
+                                            Image(systemName: "folder")
+                                            Text("Save to folder (optional)")
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.down")
+                                            .font(.caption)
                                     }
-                                    .frame(maxWidth: .infinity)
+                                    .foregroundColor(.white)
+                                    .padding()
+                                    .background(selectedFolder != nil ? Color(hex: "838CF1") : Color(hex: "404249"))
+                                    .cornerRadius(8)
                                 }
+
+                                if let error = errorMessage {
+                                    Text(error)
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
+
+                                Button(action: handleSave) {
+                                    if isSaving {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                            .frame(maxWidth: .infinity)
+                                    } else {
+                                        HStack {
+                                            Image(systemName: "square.and.arrow.down")
+                                            Text("Save Page")
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                    }
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(Color(hex: "838CF1"))
+                                .disabled(isSaving || url.isEmpty || title.isEmpty)
                             }
-                            .buttonStyle(.borderedProminent)
-                            .tint(Color(hex: "838CF1"))
-                            .disabled(isSaving || url.isEmpty || title.isEmpty)
                         }
                         .padding()
                         .background(Color(red: 0.15, green: 0.16, blue: 0.19))
@@ -380,6 +396,10 @@ struct HomeView: View {
            let titleParam = queryItems.first(where: { $0.name == "title" })?.value {
             self.url = urlParam
             self.title = titleParam
+            // Expand the save form when coming from share extension
+            withAnimation {
+                isSaveFormExpanded = true
+            }
         }
     }
 
