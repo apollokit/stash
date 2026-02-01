@@ -308,59 +308,64 @@ class SupabaseService: ObservableObject {
     // MARK: - Search
 
     struct SearchOptions {
-        var searchTitles: Bool = true
-        var searchUrls: Bool = true
-        var searchContent: Bool = true
-        var searchComments: Bool = true
+        var urlFilter: String?  // ILIKE exact phrase match on URL
         var startDate: Date?
         var endDate: Date?
         var folderIds: [String]?
     }
 
     func searchSaves(query: String, options: SearchOptions) async throws -> [Save] {
-        guard !query.isEmpty else { return [] }
+        // Need at least a main query or URL filter
+        guard !query.isEmpty || (options.urlFilter != nil && !options.urlFilter!.isEmpty) else {
+            return []
+        }
 
-        let searchPattern = "%\(query)%"
-        var saveIdsFromComments: Set<String> = []
+        var saveIds: Set<String>? = nil
 
-        // If searching comments, first find save_ids with matching comments
-        if options.searchComments {
+        // If we have a main search query, use FTS
+        if !query.isEmpty {
+            // Search saves using FTS
+            let ftsQuery = query.components(separatedBy: .whitespaces)
+                .filter { !$0.isEmpty }
+                .joined(separator: " & ")
+
+            let saves: [Save] = try await client
+                .from("saves")
+                .select()
+                .textSearch("fts", query: ftsQuery)
+                .execute()
+                .value
+
+            saveIds = Set(saves.map { $0.id })
+
+            // Also search comments using FTS and include those save IDs
             let comments: [Comment] = try await client
                 .from("comments")
                 .select()
-                .ilike("content", pattern: searchPattern)
+                .textSearch("fts", query: ftsQuery)
                 .execute()
                 .value
-            saveIdsFromComments = Set(comments.map { $0.saveId })
+
+            for comment in comments {
+                saveIds?.insert(comment.saveId)
+            }
         }
 
-        // Build the main saves query
+        // Build the final query
         var queryBuilder = client.from("saves").select()
 
-        // Build OR conditions for text search
-        var orConditions: [String] = []
-        if options.searchTitles {
-            orConditions.append("title.ilike.\(searchPattern)")
-        }
-        if options.searchUrls {
-            orConditions.append("url.ilike.\(searchPattern)")
-        }
-        if options.searchContent {
-            orConditions.append("content.ilike.\(searchPattern)")
+        // If we have FTS results, filter to those IDs
+        if let ids = saveIds {
+            if ids.isEmpty {
+                return []  // FTS found nothing
+            }
+            queryBuilder = queryBuilder.in("id", values: Array(ids))
         }
 
-        // If we have comment matches, include those save IDs
-        if !saveIdsFromComments.isEmpty {
-            let idsString = saveIdsFromComments.map { "(\($0))" }.joined(separator: ",")
-            orConditions.append("id.in.\(idsString)")
-        }
-
-        // Apply text search filter (if any conditions)
-        if !orConditions.isEmpty {
-            queryBuilder = queryBuilder.or(orConditions.joined(separator: ","))
-        } else if saveIdsFromComments.isEmpty {
-            // No search fields selected and no comment matches
-            return []
+        // Apply URL filter (ILIKE exact phrase)
+        if let urlFilter = options.urlFilter, !urlFilter.isEmpty {
+            let urlPattern = "%\(urlFilter)%"
+            queryBuilder = queryBuilder.ilike("url", pattern: urlPattern)
         }
 
         // Apply date filters

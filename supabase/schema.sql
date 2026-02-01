@@ -229,6 +229,14 @@ create table comments (
 create index comments_save_id_idx on comments(save_id);
 create index comments_created_at_idx on comments(created_at);
 
+-- Full-text search on comments
+alter table comments add column fts tsvector
+  generated always as (
+    to_tsvector('english', coalesce(content, ''))
+  ) stored;
+
+create index comments_fts_idx on comments using gin(fts);
+
 -- RLS for comments
 alter table comments enable row level security;
 

@@ -28,18 +28,17 @@ struct HomeView: View {
 
     // Search state
     @State private var searchQuery = ""
+    @State private var searchUrlFilter = ""
     @State private var isSearching = false
     @State private var searchResults: [Save] = []
+    @State private var hasSearched = false
     @State private var isSearchOptionsExpanded = false
-    @State private var searchTitles = true
-    @State private var searchUrls = true
-    @State private var searchContent = false
-    @State private var searchComments = false
     @State private var searchStartDate: Date?
     @State private var searchEndDate: Date?
     @State private var searchFolderIds: Set<String> = []
     @State private var showStartDatePicker = false
     @State private var showEndDatePicker = false
+    @State private var showSearchHelp = false
 
     @State private var isLoading = false
     @State private var isSaving = false
@@ -146,17 +145,34 @@ struct HomeView: View {
 
                         // Search Section
                         VStack(alignment: .leading, spacing: 12) {
-                            // Search bar
+                            // Header with help button
+                            HStack {
+                                Text("SEARCH SAVES")
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.gray)
+                                    .tracking(0.5)
+
+                                Button(action: { showSearchHelp = true }) {
+                                    Image(systemName: "questionmark.circle")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+
+                                Spacer()
+                            }
+
+                            // Main search bar (FTS)
                             HStack {
                                 Image(systemName: "magnifyingglass")
                                     .foregroundColor(.gray)
-                                TextField("Search saves...", text: $searchQuery)
+                                TextField("Search titles, content, comments...", text: $searchQuery)
                                     .foregroundColor(.white)
                                     .onSubmit {
                                         performSearch()
                                     }
                                 if !searchQuery.isEmpty {
-                                    Button(action: clearSearch) {
+                                    Button(action: { searchQuery = "" }) {
                                         Image(systemName: "xmark.circle.fill")
                                             .foregroundColor(.gray)
                                     }
@@ -173,7 +189,7 @@ struct HomeView: View {
                                 }
                             }) {
                                 HStack {
-                                    Text("SEARCH OPTIONS")
+                                    Text("MORE FILTERS")
                                         .font(.caption)
                                         .fontWeight(.semibold)
                                         .foregroundColor(.gray)
@@ -187,25 +203,27 @@ struct HomeView: View {
 
                             if isSearchOptionsExpanded {
                                 VStack(alignment: .leading, spacing: 16) {
-                                    // Search fields checkboxes
-                                    Text("Search in:")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-
-                                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                                        SearchCheckbox(label: "Titles", isChecked: $searchTitles)
-                                        SearchCheckbox(label: "URLs", isChecked: $searchUrls)
-                                        SearchCheckbox(label: "Content", isChecked: $searchContent)
-                                        SearchCheckbox(label: "Comments", isChecked: $searchComments)
+                                    // URL filter (ILIKE)
+                                    HStack {
+                                        Image(systemName: "link")
+                                            .foregroundColor(.gray)
+                                        TextField("e.g. economist.com", text: $searchUrlFilter)
+                                            .foregroundColor(.white)
+                                            .autocapitalization(.none)
+                                        if !searchUrlFilter.isEmpty {
+                                            Button(action: { searchUrlFilter = "" }) {
+                                                Image(systemName: "xmark.circle.fill")
+                                                    .foregroundColor(.gray)
+                                            }
+                                        }
                                     }
+                                    .padding()
+                                    .background(Color(hex: "384559"))
+                                    .cornerRadius(8)
 
                                     Divider().background(Color.gray.opacity(0.3))
 
                                     // Date filters
-                                    Text("Date range:")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-
                                     HStack(spacing: 12) {
                                         // Start date
                                         Button(action: { showStartDatePicker = true }) {
@@ -311,14 +329,20 @@ struct HomeView: View {
                             }
                             .buttonStyle(.borderedProminent)
                             .tint(Color(hex: "838CF1"))
-                            .disabled(isSearching || searchQuery.isEmpty)
+                            .disabled(isSearching || (searchQuery.isEmpty && searchUrlFilter.isEmpty))
                         }
                         .padding()
                         .background(Color(red: 0.15, green: 0.16, blue: 0.19))
                         .cornerRadius(12)
+                        .alert("How Search Works", isPresented: $showSearchHelp) {
+                            Button("Got it", role: .cancel) {}
+                        } message: {
+                            Text("Main search uses full-text search across titles, excerpts, content, highlights, and comments. Multiple words are matched with AND logic (e.g., \"economist 2025\" finds saves containing both words).\n\nURL filter uses exact phrase matching within URLs.")
+                        }
+                        .tint(Color(hex: "838CF1"))
 
                     // Search Results or Saves List
-                    if !searchResults.isEmpty || (searchQuery.isEmpty == false && !isSearching) {
+                    if hasSearched && !isSearching {
                         // Search Results
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
@@ -736,21 +760,19 @@ struct HomeView: View {
     }
 
     private func performSearch() {
-        guard !searchQuery.isEmpty else { return }
+        guard !searchQuery.isEmpty || !searchUrlFilter.isEmpty else { return }
         isSearching = true
 
         Task {
             do {
                 let options = SupabaseService.SearchOptions(
-                    searchTitles: searchTitles,
-                    searchUrls: searchUrls,
-                    searchContent: searchContent,
-                    searchComments: searchComments,
+                    urlFilter: searchUrlFilter.isEmpty ? nil : searchUrlFilter,
                     startDate: searchStartDate,
                     endDate: searchEndDate,
                     folderIds: searchFolderIds.isEmpty ? nil : Array(searchFolderIds)
                 )
                 searchResults = try await supabase.searchSaves(query: searchQuery, options: options)
+                hasSearched = true
             } catch {
                 errorMessage = "Search failed: \(error.localizedDescription)"
             }
@@ -760,28 +782,16 @@ struct HomeView: View {
 
     private func clearSearch() {
         searchQuery = ""
+        searchUrlFilter = ""
         searchResults = []
+        hasSearched = false
+        searchStartDate = nil
+        searchEndDate = nil
+        searchFolderIds.removeAll()
     }
 }
 
 // MARK: - Helper Views
-
-struct SearchCheckbox: View {
-    let label: String
-    @Binding var isChecked: Bool
-
-    var body: some View {
-        Button(action: { isChecked.toggle() }) {
-            HStack(spacing: 8) {
-                Image(systemName: isChecked ? "checkmark.square.fill" : "square")
-                    .foregroundColor(isChecked ? Color(hex: "838CF1") : .gray)
-                Text(label)
-                    .font(.subheadline)
-                    .foregroundColor(.white)
-            }
-        }
-    }
-}
 
 struct FolderFilterChip: View {
     let folder: Folder
