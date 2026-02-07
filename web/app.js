@@ -644,41 +644,46 @@ class StashApp {
       month: 'short',
       day: 'numeric'
     });
-    const url = save.url ? new URL(save.url).hostname.replace('www.', '') : '';
+    let hostname = '';
+    let faviconUrl = '';
+    try {
+      const urlObj = new URL(save.url);
+      hostname = urlObj.hostname.replace('www.', '');
+      faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
+    } catch (e) {
+      // Invalid URL
+    }
     const highlightClass = save.highlight ? 'highlight' : '';
 
-    let contentHtml = '';
-    if (save.highlight) {
-      contentHtml = `<div class="timeline-card-highlight">${this.escapeHtml(save.highlight)}</div>`;
-    } else {
-      const excerpt = save.excerpt || save.content || '';
-      if (excerpt) {
-        contentHtml = `<div class="timeline-card-excerpt">${this.escapeHtml(excerpt.substring(0, 200))}</div>`;
-      }
-    }
-
     const favoriteIcon = save.is_favorite ? `
-      <div class="timeline-card-favorite">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+      <span class="timeline-card-favorite">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
         </svg>
+      </span>
+    ` : '';
+
+    // Preview image on the right (if exists and not a highlight)
+    const previewImage = (save.image_url && !save.highlight) ? `
+      <div class="timeline-card-preview">
+        <img src="${save.image_url}" alt="" onerror="this.parentElement.style.display='none'">
       </div>
     ` : '';
 
     return `
       <div class="timeline-card ${highlightClass}" data-id="${save.id}">
-        <div class="timeline-card-date">
-          <span>${date}</span>
-          ${favoriteIcon}
+        <div class="timeline-card-favicon">
+          ${faviconUrl ? `<img src="${faviconUrl}" alt="" onerror="this.style.display='none'">` : ''}
         </div>
-        <div class="timeline-card-content">
-          <div class="timeline-card-meta">
-            <div class="timeline-card-site">${this.escapeHtml(save.site_name || url)}</div>
-            ${url ? `<span class="timeline-card-url">${this.escapeHtml(url)}</span>` : ''}
+        <div class="timeline-card-main">
+          <div class="timeline-card-header">
+            <span class="timeline-card-date">${date}</span>
+            <span class="timeline-card-site">${this.escapeHtml(save.site_name || hostname)}</span>
+            ${favoriteIcon}
           </div>
           <div class="timeline-card-title">${this.escapeHtml(save.title || 'Untitled')}</div>
-          ${contentHtml}
         </div>
+        ${previewImage}
       </div>
     `;
   }

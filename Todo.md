@@ -1,6 +1,4 @@
 - make an even more collapsed view in webapp - just a list of links/titles
-- add favicons to timeline view in webapp
-- figure out how to "publish" the ios app
 - add handling for tags
 - add filtering by websites/domains
 - improve functionality of search bar/filtering
