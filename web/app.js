@@ -28,6 +28,9 @@ class StashApp {
     // Load theme preference
     this.loadTheme();
 
+    // Load saved sort preference
+    this.loadSortPreference();
+
     // Check authentication state
     const { data: { session } } = await this.supabase.auth.getSession();
 
@@ -61,6 +64,16 @@ class StashApp {
     const savedTheme = localStorage.getItem('stash-theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     this.updateThemeToggle(savedTheme);
+  }
+
+  loadSortPreference() {
+    const savedSort = localStorage.getItem('stash_sort_preference');
+    if (savedSort) {
+      const sortSelect = document.getElementById('sort-select');
+      if (sortSelect) {
+        sortSelect.value = savedSort;
+      }
+    }
   }
 
   toggleTheme() {
@@ -122,6 +135,7 @@ class StashApp {
 
     // Sort
     document.getElementById('sort-select').addEventListener('change', (e) => {
+      localStorage.setItem('stash_sort_preference', e.target.value);
       this.loadSaves();
     });
 
@@ -585,21 +599,25 @@ class StashApp {
       savesByMonth[monthKey].saves.push(save);
     });
 
+    // Load collapsed months from localStorage
+    const collapsedMonths = JSON.parse(localStorage.getItem('stash_collapsed_months') || '[]');
+
     // Render timeline
     let html = '';
     Object.keys(savesByMonth).forEach(monthKey => {
       const month = savesByMonth[monthKey];
+      const isCollapsed = collapsedMonths.includes(monthKey);
       html += `
         <div class="timeline-month" data-month="${monthKey}">
           <div class="timeline-month-header">
-            <div class="timeline-month-toggle">
+            <div class="timeline-month-toggle${isCollapsed ? ' collapsed' : ''}">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </div>
             <span>${month.label}</span>
           </div>
-          <div class="timeline-saves">
+          <div class="timeline-saves${isCollapsed ? ' collapsed' : ''}">
             ${month.saves.map(save => this.renderTimelineCard(save)).join('')}
           </div>
         </div>
@@ -613,9 +631,25 @@ class StashApp {
       header.addEventListener('click', () => {
         const toggle = header.querySelector('.timeline-month-toggle');
         const saves = header.nextElementSibling;
+        const monthKey = header.parentElement.dataset.month;
 
         toggle.classList.toggle('collapsed');
         saves.classList.toggle('collapsed');
+
+        // Save collapsed state to localStorage
+        const collapsedMonths = JSON.parse(localStorage.getItem('stash_collapsed_months') || '[]');
+        const isNowCollapsed = toggle.classList.contains('collapsed');
+        if (isNowCollapsed) {
+          if (!collapsedMonths.includes(monthKey)) {
+            collapsedMonths.push(monthKey);
+          }
+        } else {
+          const index = collapsedMonths.indexOf(monthKey);
+          if (index > -1) {
+            collapsedMonths.splice(index, 1);
+          }
+        }
+        localStorage.setItem('stash_collapsed_months', JSON.stringify(collapsedMonths));
       });
     });
 
