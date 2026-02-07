@@ -10,7 +10,10 @@
   <div class="container">
     <!-- Header -->
     <header class="header">
-      <h1>Stash</h1>
+      <div class="logo">
+        <img src="icons/icon32.png" alt="Stash" class="logo-icon">
+        <h1>Stash</h1>
+      </div>
       <button id="settings-btn" class="icon-btn" title="Settings">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
@@ -28,6 +31,28 @@
         <button type="button" class="btn secondary" id="signup-btn">Sign Up</button>
       </form>
       <p id="auth-error" class="error"></p>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settings-panel" class="settings-panel hidden">
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <button id="close-settings-btn" class="icon-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="settings-content">
+        <div class="setting-item">
+          <span>Dark Mode</span>
+          <label class="toggle">
+            <input type="checkbox" id="dark-mode-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
     </div>
 
     <!-- Main View -->

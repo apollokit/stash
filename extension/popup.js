@@ -14,9 +14,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   const folderDropdown = document.getElementById('folder-dropdown');
   const folderList = document.getElementById('folder-list');
   const folderBtnText = document.getElementById('folder-btn-text');
+  const settingsBtn = document.getElementById('settings-btn');
+  const settingsPanel = document.getElementById('settings-panel');
+  const closeSettingsBtn = document.getElementById('close-settings-btn');
+  const darkModeToggle = document.getElementById('dark-mode-toggle');
 
   let folders = [];
   let selectedFolder = null;
+
+  // Load dark mode preference
+  const { darkMode } = await chrome.storage.local.get(['darkMode']);
+  if (darkMode) {
+    document.body.classList.add('dark');
+    darkModeToggle.checked = true;
+  }
+
+  // Settings handlers
+  settingsBtn.addEventListener('click', () => {
+    settingsPanel.classList.remove('hidden');
+  });
+
+  closeSettingsBtn.addEventListener('click', () => {
+    settingsPanel.classList.add('hidden');
+  });
+
+  darkModeToggle.addEventListener('change', async () => {
+    if (darkModeToggle.checked) {
+      document.body.classList.add('dark');
+      await chrome.storage.local.set({ darkMode: true });
+    } else {
+      document.body.classList.remove('dark');
+      await chrome.storage.local.set({ darkMode: false });
+    }
+  });
 
   // Check if user is authenticated
   const response = await chrome.runtime.sendMessage({ action: 'getUser' });

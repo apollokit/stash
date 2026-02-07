@@ -15,6 +15,8 @@ body {
 
 .container {
   padding: 16px;
+  position: relative;
+  min-height: 400px;
 }
 
 .hidden {
@@ -31,10 +33,22 @@ body {
   border-bottom: 1px solid #e5e7eb;
 }
 
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
 .header h1 {
   font-size: 18px;
   font-weight: 600;
-  color: #6366f1;
+  color: #1f2937;
 }
 
 .icon-btn {
@@ -336,4 +350,227 @@ input:focus {
 
 .sync-status.error {
   color: #ef4444;
+}
+
+/* Settings Panel */
+.settings-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #ffffff;
+  z-index: 100;
+  padding: 16px;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.settings-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.settings-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+}
+
+.setting-item span {
+  font-size: 14px;
+  color: #1f2937;
+}
+
+/* Toggle Switch */
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d1d5db;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle input:checked + .toggle-slider {
+  background-color: #858CEA;
+}
+
+.toggle input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* Dark Mode */
+body.dark {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
+body.dark .container {
+  background: #1f2937;
+}
+
+body.dark .header {
+  border-bottom-color: #374151;
+}
+
+body.dark .header h1 {
+  color: #f3f4f6;
+}
+
+body.dark .icon-btn {
+  color: #9ca3af;
+}
+
+body.dark .icon-btn:hover {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+body.dark input[type="email"],
+body.dark input[type="password"] {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+body.dark input::placeholder {
+  color: #9ca3af;
+}
+
+body.dark .btn.secondary {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+body.dark .btn.secondary:hover {
+  background: #4b5563;
+}
+
+body.dark .recent h2 {
+  color: #9ca3af;
+}
+
+body.dark .save-item {
+  background: #374151;
+}
+
+body.dark .save-item:hover {
+  background: #4b5563;
+}
+
+body.dark .save-item .icon {
+  background: #4b5563;
+}
+
+body.dark .save-item .icon.highlight {
+  background: #78350f;
+}
+
+body.dark .save-item .title {
+  color: #f3f4f6;
+}
+
+body.dark .save-item .meta {
+  color: #9ca3af;
+}
+
+body.dark .empty {
+  color: #6b7280;
+}
+
+body.dark .footer {
+  border-top-color: #374151;
+}
+
+body.dark .footer a {
+  color: #858CEA;
+}
+
+body.dark .text-btn {
+  color: #9ca3af;
+}
+
+body.dark .text-btn:hover {
+  color: #f3f4f6;
+}
+
+body.dark .user-email {
+  color: #9ca3af;
+}
+
+body.dark .folder-dropdown {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+body.dark .folder-item:hover {
+  background: #4b5563;
+}
+
+body.dark .folder-name {
+  color: #f3f4f6;
+}
+
+body.dark .settings-panel {
+  background: #1f2937;
+}
+
+body.dark .settings-header {
+  border-bottom-color: #374151;
+}
+
+body.dark .settings-header h2 {
+  color: #f3f4f6;
+}
+
+body.dark .setting-item span {
+  color: #f3f4f6;
+}
+
+body.dark .error {
+  color: #f87171;
 }
