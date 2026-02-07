@@ -186,10 +186,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       const title = save.title || save.highlight?.substring(0, 50) || 'Untitled';
       const date = new Date(save.created_at).toLocaleDateString();
 
+      // Get favicon URL from the saved page's domain
+      let faviconUrl = '';
+      try {
+        const domain = new URL(save.url).hostname;
+        faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+      } catch (e) {
+        // Invalid URL, will use fallback
+      }
+
       return `
         <div class="save-item" data-url="${save.url}">
           <div class="icon ${isHighlight ? 'highlight' : ''}">
-            ${isHighlight ? '✨' : '📄'}
+            ${faviconUrl ? `<img src="${faviconUrl}" alt="" class="favicon">` : '📄'}
           </div>
           <div class="content">
             <div class="title">${escapeHtml(title)}</div>
