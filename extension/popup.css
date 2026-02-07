@@ -89,12 +89,12 @@ input:focus {
 }
 
 .btn.primary {
-  background: #6366f1;
+  background: #858CEA;
   color: white;
 }
 
 .btn.primary:hover {
-  background: #4f46e5;
+  background: #6366f1;
 }
 
 .btn.secondary {
@@ -138,19 +138,18 @@ input:focus {
 
 .folder-save-container {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 4px;
 }
 
 .folder-btn {
-  flex: 1;
   justify-content: flex-start;
 }
 
-.expand-btn {
-  width: 40px;
-  padding: 10px;
+.folder-color-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-right: 6px;
 }
 
 .folder-dropdown {

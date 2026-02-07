@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const savesList = document.getElementById('saves-list');
   const openAppLink = document.getElementById('open-app-link');
   const saveToFolderBtn = document.getElementById('save-to-folder-btn');
-  const folderExpandBtn = document.getElementById('folder-expand-btn');
   const folderDropdown = document.getElementById('folder-dropdown');
   const folderList = document.getElementById('folder-list');
   const folderBtnText = document.getElementById('folder-btn-text');
@@ -115,7 +114,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       Saving...
     `;
 
-    await chrome.runtime.sendMessage({ action: 'savePage' });
+    // Pass folder ID if a folder is selected
+    const message = { action: 'savePage' };
+    if (selectedFolder) {
+      message.folderId = selectedFolder.id;
+    }
+    await chrome.runtime.sendMessage(message);
 
     savePageBtn.disabled = false;
     savePageBtn.innerHTML = `
@@ -186,44 +190,50 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     folders = response.folders;
 
-    // Load last used folder from storage
-    chrome.storage.local.get(['lastFolderId'], (result) => {
-      if (result.lastFolderId) {
-        const folder = folders.find(f => f.id === result.lastFolderId);
-        if (folder) {
-          selectedFolder = folder;
-          updateFolderButtonText();
-        }
-      }
-    });
-
     renderFolderList();
   }
 
   // Render folder dropdown list
   function renderFolderList() {
-    if (!folders.length) {
-      folderList.innerHTML = '<p class="empty">No folders yet</p>';
-      return;
+    // Always show "No folder" option first
+    let html = `
+      <div class="folder-item no-folder-item" data-folder-id="">
+        <div class="folder-color" style="background-color: #6b7280"></div>
+        <div class="folder-name">No folder</div>
+      </div>
+    `;
+
+    if (folders.length) {
+      html += folders.map(folder => {
+        // Ensure color has # prefix for CSS
+        let color = folder.color || '#6b7280';
+        if (color && !color.startsWith('#')) {
+          color = '#' + color;
+        }
+        return `
+          <div class="folder-item" data-folder-id="${folder.id}">
+            <div class="folder-color" style="background-color: ${color}"></div>
+            <div class="folder-name">${escapeHtml(folder.name)}</div>
+          </div>
+        `;
+      }).join('');
     }
 
-    folderList.innerHTML = folders.map(folder => `
-      <div class="folder-item" data-folder-id="${folder.id}">
-        <div class="folder-color" style="background-color: ${folder.color}"></div>
-        <div class="folder-name">${escapeHtml(folder.name)}</div>
-      </div>
-    `).join('');
+    folderList.innerHTML = html;
 
     // Add click handlers
     folderList.querySelectorAll('.folder-item').forEach(item => {
       item.addEventListener('click', () => {
         const folderId = item.dataset.folderId;
-        selectedFolder = folders.find(f => f.id === folderId);
+        if (folderId) {
+          selectedFolder = folders.find(f => f.id === folderId);
+        } else {
+          // "No folder" selected
+          selectedFolder = null;
+        }
         updateFolderButtonText();
+        updateFolderButtonStyle();
         folderDropdown.classList.add('hidden');
-
-        // Save to storage
-        chrome.storage.local.set({ lastFolderId: folderId });
       });
     });
   }
@@ -231,64 +241,40 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Update folder button text
   function updateFolderButtonText() {
     if (selectedFolder) {
-      folderBtnText.textContent = 'Save to folder \"' + selectedFolder.name + '\"';
+      // Ensure color has # prefix for CSS
+      let color = selectedFolder.color || '#6b7280';
+      if (color && !color.startsWith('#')) {
+        color = '#' + color;
+      }
+      folderBtnText.innerHTML = `<span style="color: ${color}">●</span> Save to "${escapeHtml(selectedFolder.name)}"`;
     } else {
-      folderBtnText.textContent = 'Save to folder';
+      folderBtnText.innerHTML = 'Select folder';
     }
   }
 
-  // Toggle folder dropdown
-  folderExpandBtn.addEventListener('click', () => {
-    folderDropdown.classList.toggle('hidden');
-  });
-
   // Close dropdown when clicking outside
   document.addEventListener('click', (e) => {
-    if (!folderExpandBtn.contains(e.target) &&
-        !folderDropdown.contains(e.target) &&
+    if (!folderDropdown.contains(e.target) &&
         !saveToFolderBtn.contains(e.target)) {
       folderDropdown.classList.add('hidden');
     }
   });
 
-  // Save to folder
-  saveToFolderBtn.addEventListener('click', async () => {
-    if (!selectedFolder) {
-      folderDropdown.classList.remove('hidden');
-      return;
-    }
-
-    saveToFolderBtn.disabled = true;
-    saveToFolderBtn.innerHTML = `
-      <svg class="spinning" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
-      </svg>
-      Saving...
-    `;
-
-    await chrome.runtime.sendMessage({
-      action: 'savePage',
-      folderId: selectedFolder.id
-    });
-
-    saveToFolderBtn.disabled = false;
-    saveToFolderBtn.innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="20 6 9 17 4 12"></polyline>
-      </svg>
-      Saved!
-    `;
-
-    setTimeout(() => {
-      saveToFolderBtn.innerHTML = `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-        </svg>
-        <span id="folder-btn-text">${selectedFolder ? escapeHtml(selectedFolder.name) : 'Save to folder'}</span>
-      `;
-      loadRecentSaves();
-    }, 1500);
+  // Toggle folder dropdown (folder button just selects folder, doesn't save)
+  saveToFolderBtn.addEventListener('click', () => {
+    folderDropdown.classList.toggle('hidden');
   });
+
+  // Update folder button style based on selection
+  function updateFolderButtonStyle() {
+    if (selectedFolder) {
+      saveToFolderBtn.classList.remove('secondary');
+      saveToFolderBtn.classList.add('primary');
+    } else {
+      saveToFolderBtn.classList.remove('primary');
+      saveToFolderBtn.classList.add('secondary');
+    }
+  }
 
   // Open web app
   openAppLink.addEventListener('click', (e) => {
