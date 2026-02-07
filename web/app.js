@@ -680,10 +680,16 @@ class StashApp {
     });
     let hostname = '';
     let faviconUrl = '';
+    let displayUrl = save.url || '';
     try {
       const urlObj = new URL(save.url);
       hostname = urlObj.hostname.replace('www.', '');
       faviconUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
+      // Show full URL without protocol, truncated to 80 chars
+      displayUrl = save.url.replace(/^https?:\/\//, '').replace(/^www\./, '');
+      if (displayUrl.length > 80) {
+        displayUrl = displayUrl.substring(0, 77) + '...';
+      }
     } catch (e) {
       // Invalid URL
     }
@@ -712,7 +718,7 @@ class StashApp {
         <div class="timeline-card-main">
           <div class="timeline-card-header">
             <span class="timeline-card-date">${date}</span>
-            <span class="timeline-card-site">${this.escapeHtml(save.site_name || hostname)}</span>
+            <span class="timeline-card-site">${this.escapeHtml(displayUrl)}</span>
             ${favoriteIcon}
           </div>
           <div class="timeline-card-title">${this.escapeHtml(save.title || 'Untitled')}</div>
