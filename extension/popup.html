@@ -21,9 +21,9 @@
 
     <!-- Auth View -->
     <div id="auth-view" class="view">
-      <form id="auth-form">
-        <input type="email" id="email" placeholder="Email" required>
-        <input type="password" id="password" placeholder="Password" required>
+      <form id="auth-form" autocomplete="on">
+        <input type="email" id="email" name="email" placeholder="Email" autocomplete="email" required>
+        <input type="password" id="password" name="password" placeholder="Password" autocomplete="current-password" required>
         <button type="submit" class="btn primary" id="signin-btn">Sign In</button>
         <button type="button" class="btn secondary" id="signup-btn">Sign Up</button>
       </form>
