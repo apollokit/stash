@@ -42,6 +42,7 @@ struct HomeView: View {
 
     @State private var isLoading = false
     @State private var isSaving = false
+    @State private var isFetchingTitle = false
     @State private var errorMessage: String?
     @State private var showFolderPicker = false
     @State private var showCreateFolder = false
@@ -88,11 +89,32 @@ struct HomeView: View {
                                     .cornerRadius(8)
                                     .foregroundColor(.white)
 
-                                TextField("Title", text: $title)
-                                    .padding()
-                                    .background(Color(hex: "384559"))
-                                    .cornerRadius(8)
-                                    .foregroundColor(.white)
+                                HStack(spacing: 8) {
+                                    TextField("Title", text: $title)
+                                        .padding()
+                                        .background(Color(hex: "384559"))
+                                        .cornerRadius(8)
+                                        .foregroundColor(.white)
+
+                                    // Fetch title button - shows when URL exists but title is empty
+                                    if !url.isEmpty && title.isEmpty {
+                                        Button(action: fetchTitleFromURL) {
+                                            if isFetchingTitle {
+                                                ProgressView()
+                                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                                    .frame(width: 44, height: 44)
+                                            } else {
+                                                Image(systemName: "arrow.down.doc")
+                                                    .font(.system(size: 16))
+                                                    .frame(width: 44, height: 44)
+                                            }
+                                        }
+                                        .background(Color(hex: "838CF1"))
+                                        .cornerRadius(8)
+                                        .foregroundColor(.white)
+                                        .disabled(isFetchingTitle)
+                                    }
+                                }
 
                                 Button(action: { showFolderPicker = true }) {
                                     HStack {
@@ -735,6 +757,103 @@ struct HomeView: View {
         Task {
             try? await supabase.signOut()
         }
+    }
+
+    private func fetchTitleFromURL() {
+        guard let pageUrl = URL(string: url) else {
+            errorMessage = "Invalid URL"
+            return
+        }
+
+        isFetchingTitle = true
+        errorMessage = nil
+
+        Task {
+            do {
+                var request = URLRequest(url: pageUrl)
+                request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+                request.timeoutInterval = 10
+
+                let (data, _) = try await URLSession.shared.data(for: request)
+
+                if let html = String(data: data, encoding: .utf8) {
+                    // Try to extract og:title first (usually better for videos/articles)
+                    if let ogTitle = extractMetaContent(from: html, property: "og:title") {
+                        await MainActor.run {
+                            title = ogTitle
+                        }
+                    }
+                    // Fall back to <title> tag
+                    else if let pageTitle = extractTitle(from: html) {
+                        await MainActor.run {
+                            title = pageTitle
+                        }
+                    } else {
+                        await MainActor.run {
+                            errorMessage = "Could not find title"
+                        }
+                    }
+                } else {
+                    await MainActor.run {
+                        errorMessage = "Could not read page content"
+                    }
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = "Failed to fetch: \(error.localizedDescription)"
+                }
+            }
+
+            await MainActor.run {
+                isFetchingTitle = false
+            }
+        }
+    }
+
+    private func extractMetaContent(from html: String, property: String) -> String? {
+        // Match both property="og:title" and name="og:title" patterns
+        let patterns = [
+            "<meta[^>]*property=[\"']\(property)[\"'][^>]*content=[\"']([^\"']*)[\"']",
+            "<meta[^>]*content=[\"']([^\"']*)[\"'][^>]*property=[\"']\(property)[\"']"
+        ]
+
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+               let match = regex.firstMatch(in: html, range: NSRange(html.startIndex..., in: html)),
+               let range = Range(match.range(at: 1), in: html) {
+                let content = String(html[range])
+                return decodeHTMLEntities(content)
+            }
+        }
+        return nil
+    }
+
+    private func extractTitle(from html: String) -> String? {
+        let pattern = "<title[^>]*>([^<]*)</title>"
+        if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+           let match = regex.firstMatch(in: html, range: NSRange(html.startIndex..., in: html)),
+           let range = Range(match.range(at: 1), in: html) {
+            let content = String(html[range])
+            return decodeHTMLEntities(content.trimmingCharacters(in: .whitespacesAndNewlines))
+        }
+        return nil
+    }
+
+    private func decodeHTMLEntities(_ string: String) -> String {
+        var result = string
+        let entities = [
+            "&amp;": "&",
+            "&lt;": "<",
+            "&gt;": ">",
+            "&quot;": "\"",
+            "&apos;": "'",
+            "&#39;": "'",
+            "&nbsp;": " "
+        ]
+        for (entity, replacement) in entities {
+            result = result.replacingOccurrences(of: entity, with: replacement)
+        }
+        return result
     }
 
     private func createFolder() {
