@@ -15,6 +15,7 @@ struct SaveDetailView: View {
     @State private var isRefreshingMetadata = false
     @State private var isFavorite: Bool = false
     @State private var showMetadataUpdatedToast = false
+    @State private var hasChanges: Bool = false
     @FocusState private var isTitleFocused: Bool
 
     var body: some View {
@@ -279,8 +280,10 @@ struct SaveDetailView: View {
             await loadCurrentFolder()
         }
         .onDisappear {
-            // Refresh the list when navigating back
-            onUpdate?()
+            // Only refresh the list if something was changed
+            if hasChanges {
+                onUpdate?()
+            }
         }
     }
 
@@ -292,7 +295,7 @@ struct SaveDetailView: View {
         Task {
             do {
                 try await supabase.updateSaveTitle(saveId: save.id, title: editableTitle)
-                // Title is already updated locally via editableTitle binding
+                hasChanges = true
             } catch {
                 print("Error updating title: \(error)")
                 editableTitle = save.title  // Revert on error
@@ -325,6 +328,7 @@ struct SaveDetailView: View {
                 try await supabase.toggleFavorite(saveId: save.id, currentValue: isFavorite)
                 await MainActor.run {
                     isFavorite.toggle()
+                    hasChanges = true
                 }
             } catch {
                 print("Error toggling favorite: \(error)")
@@ -341,10 +345,12 @@ struct SaveDetailView: View {
                     let folders = try await supabase.getFolders()
                     await MainActor.run {
                         currentFolder = folders.first { $0.id == folderId }
+                        hasChanges = true
                     }
                 } else {
                     await MainActor.run {
                         currentFolder = nil
+                        hasChanges = true
                     }
                 }
             } catch {
@@ -372,6 +378,7 @@ struct SaveDetailView: View {
             await MainActor.run {
                 isRefreshingMetadata = false
                 showMetadataUpdatedToast = true
+                hasChanges = true
             }
             try? await Task.sleep(nanoseconds: 1_500_000_000)
             await MainActor.run {
