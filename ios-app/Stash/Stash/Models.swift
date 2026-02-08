@@ -111,6 +111,7 @@ struct Comment: Codable, Identifiable {
     let saveId: String
     let content: String
     let imageUrl: String?
+    let isQuote: Bool
     let createdAt: Date
     let updatedAt: Date
 
@@ -120,6 +121,7 @@ struct Comment: Codable, Identifiable {
         case saveId = "save_id"
         case content
         case imageUrl = "image_url"
+        case isQuote = "is_quote"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -130,6 +132,18 @@ struct Comment: Codable, Identifiable {
         formatter.timeStyle = .short
         return formatter.string(from: createdAt)
     }
+
+    var isEdited: Bool {
+        // Consider edited if updated more than 1 second after creation
+        updatedAt.timeIntervalSince(createdAt) > 1
+    }
+
+    var editedDateString: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return "edited \(formatter.string(from: updatedAt))"
+    }
 }
 
 // MARK: - Create Comment Request
@@ -138,11 +152,24 @@ struct CreateCommentRequest: Codable {
     let saveId: String
     let content: String
     let imageUrl: String?
+    let isQuote: Bool
 
     enum CodingKeys: String, CodingKey {
         case userId = "user_id"
         case saveId = "save_id"
         case content
         case imageUrl = "image_url"
+        case isQuote = "is_quote"
+    }
+}
+
+// MARK: - Update Comment Request
+struct UpdateCommentRequest: Codable {
+    let content: String
+    let isQuote: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case content
+        case isQuote = "is_quote"
     }
 }

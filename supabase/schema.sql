@@ -221,6 +221,7 @@ create table comments (
   save_id uuid references saves(id) on delete cascade not null,
   content text not null,
   image_url text, -- optional uploaded image
+  is_quote boolean default false, -- if true, this is a quote from the article
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now()
 );

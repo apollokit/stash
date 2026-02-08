@@ -252,7 +252,7 @@ class SupabaseService: ObservableObject {
         return response
     }
 
-    func createComment(saveId: String, content: String, imageUrl: String? = nil) async throws -> Comment {
+    func createComment(saveId: String, content: String, imageUrl: String? = nil, isQuote: Bool = false) async throws -> Comment {
         guard let user = currentUser else {
             throw NSError(domain: "SupabaseService", code: 401, userInfo: [NSLocalizedDescriptionKey: "Not authenticated"])
         }
@@ -261,12 +261,28 @@ class SupabaseService: ObservableObject {
             userId: user.id.uuidString,
             saveId: saveId,
             content: content,
-            imageUrl: imageUrl
+            imageUrl: imageUrl,
+            isQuote: isQuote
         )
 
         let response: Comment = try await client
             .from("comments")
             .insert(request)
+            .select()
+            .single()
+            .execute()
+            .value
+
+        return response
+    }
+
+    func updateComment(id: String, content: String, isQuote: Bool) async throws -> Comment {
+        let request = UpdateCommentRequest(content: content, isQuote: isQuote)
+
+        let response: Comment = try await client
+            .from("comments")
+            .update(request)
+            .eq("id", value: id)
             .select()
             .single()
             .execute()
