@@ -12,6 +12,7 @@ struct SaveDetailView: View {
     @State private var currentFolder: Folder?
     @State private var editableTitle: String = ""
     @State private var showCopiedToast = false
+    @State private var isRefreshingMetadata = false
     @FocusState private var isTitleFocused: Bool
 
     var body: some View {
@@ -187,6 +188,24 @@ struct SaveDetailView: View {
                         .tint(currentFolder != nil ? Color(hex: currentFolder!.color) : .gray)
                     }
 
+                    // Refresh metadata button
+                    Button(action: refreshMetadata) {
+                        HStack {
+                            if isRefreshingMetadata {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(0.8)
+                            } else {
+                                Image(systemName: "arrow.clockwise")
+                            }
+                            Text("Update Metadata")
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.gray)
+                    .disabled(isRefreshingMetadata)
+
                     Button(role: .destructive, action: { showDeleteConfirmation = true }) {
                         HStack {
                             Image(systemName: "trash")
@@ -317,6 +336,17 @@ struct SaveDetailView: View {
                 dismiss()
             } catch {
                 print("Error deleting save: \(error)")
+            }
+        }
+    }
+
+    private func refreshMetadata() {
+        isRefreshingMetadata = true
+        Task {
+            await supabase.fetchAndUpdateMetadata(saveId: save.id, pageUrl: save.url)
+            await MainActor.run {
+                isRefreshingMetadata = false
+                onUpdate?()
             }
         }
     }
