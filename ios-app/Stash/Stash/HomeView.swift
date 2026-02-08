@@ -387,7 +387,10 @@ struct HomeView: View {
                                     .padding()
                             } else {
                                 ForEach(searchResults) { save in
-                                    SaveItemRow(save: save) {
+                                    SaveItemRow(
+                                        save: save,
+                                        folderColor: folders.first { $0.id == save.folderId }?.color
+                                    ) {
                                         performSearch()
                                     }
                                 }
@@ -496,7 +499,10 @@ struct HomeView: View {
                                         .padding()
                                 } else {
                                     ForEach(folderSaves) { save in
-                                        SaveItemRow(save: save) {
+                                        SaveItemRow(
+                                            save: save,
+                                            folderColor: folder.color
+                                        ) {
                                             Task {
                                                 await loadFolderSaves(folderId: folder.id)
                                             }
@@ -518,7 +524,10 @@ struct HomeView: View {
                                     .padding()
                             } else {
                                 ForEach(saves) { save in
-                                    SaveItemRow(save: save) {
+                                    SaveItemRow(
+                                        save: save,
+                                        folderColor: folders.first { $0.id == save.folderId }?.color
+                                    ) {
                                         Task {
                                             await loadData()
                                         }

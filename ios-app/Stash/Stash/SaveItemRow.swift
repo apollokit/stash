@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SaveItemRow: View {
     let save: Save
+    var folderColor: String?
     var onUpdate: (() -> Void)?
 
     @EnvironmentObject var supabase: SupabaseService
@@ -70,11 +71,20 @@ struct SaveItemRow: View {
 
                 Spacer()
 
-                // Favorite indicator
-                if save.isFavorite {
-                    Image(systemName: "heart.fill")
-                        .foregroundColor(.red)
-                        .font(.caption)
+                // Favorite and folder indicators
+                if save.isFavorite || folderColor != nil {
+                    VStack(spacing: 4) {
+                        if save.isFavorite {
+                            Image(systemName: "heart.fill")
+                                .foregroundColor(.red)
+                                .font(.caption)
+                        }
+                        if let color = folderColor {
+                            Circle()
+                                .fill(Color(hex: color))
+                                .frame(width: 10, height: 10)
+                        }
+                    }
                 }
 
                 // Thumbnail if image available
