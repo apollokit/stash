@@ -13,6 +13,8 @@ struct SaveDetailView: View {
     @State private var editableTitle: String = ""
     @State private var showCopiedToast = false
     @State private var isRefreshingMetadata = false
+    @State private var isFavorite: Bool = false
+    @State private var showMetadataUpdatedToast = false
     @FocusState private var isTitleFocused: Bool
 
     var body: some View {
@@ -162,13 +164,13 @@ struct SaveDetailView: View {
                     HStack(spacing: 12) {
                         Button(action: toggleFavorite) {
                             HStack {
-                                Image(systemName: save.isFavorite ? "heart.fill" : "heart")
-                                Text(save.isFavorite ? "Unfavorite" : "Favorite")
+                                Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                Text(isFavorite ? "Unfavorite" : "Favorite")
                             }
                             .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
-                        .tint(save.isFavorite ? .red : .gray)
+                        .tint(isFavorite ? .red : .gray)
 
                         Button(action: { showFolderPicker = true }) {
                             HStack {
@@ -224,9 +226,9 @@ struct SaveDetailView: View {
         }
         .background(Color(hex: "121826"))
         .overlay {
-            if showCopiedToast {
-                VStack {
-                    Spacer()
+            VStack {
+                Spacer()
+                if showCopiedToast {
                     Text("Link copied")
                         .font(.subheadline)
                         .fontWeight(.medium)
@@ -236,10 +238,23 @@ struct SaveDetailView: View {
                         .background(Color(hex: "838CF1"))
                         .cornerRadius(20)
                         .padding(.bottom, 40)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-                .animation(.easeInOut(duration: 0.2), value: showCopiedToast)
+                if showMetadataUpdatedToast {
+                    Text("Metadata updated")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                        .background(Color(hex: "838CF1"))
+                        .cornerRadius(20)
+                        .padding(.bottom, 40)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
             }
+            .animation(.easeInOut(duration: 0.2), value: showCopiedToast)
+            .animation(.easeInOut(duration: 0.2), value: showMetadataUpdatedToast)
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Color(hex: "121826"), for: .navigationBar)
@@ -260,7 +275,12 @@ struct SaveDetailView: View {
         }
         .task {
             editableTitle = save.title
+            isFavorite = save.isFavorite
             await loadCurrentFolder()
+        }
+        .onDisappear {
+            // Refresh the list when navigating back
+            onUpdate?()
         }
     }
 
@@ -272,7 +292,7 @@ struct SaveDetailView: View {
         Task {
             do {
                 try await supabase.updateSaveTitle(saveId: save.id, title: editableTitle)
-                onUpdate?()
+                // Title is already updated locally via editableTitle binding
             } catch {
                 print("Error updating title: \(error)")
                 editableTitle = save.title  // Revert on error
@@ -302,8 +322,10 @@ struct SaveDetailView: View {
     private func toggleFavorite() {
         Task {
             do {
-                try await supabase.toggleFavorite(saveId: save.id, currentValue: save.isFavorite)
-                onUpdate?()
+                try await supabase.toggleFavorite(saveId: save.id, currentValue: isFavorite)
+                await MainActor.run {
+                    isFavorite.toggle()
+                }
             } catch {
                 print("Error toggling favorite: \(error)")
             }
@@ -317,11 +339,14 @@ struct SaveDetailView: View {
                 // Update local folder state
                 if let folderId = folderId {
                     let folders = try await supabase.getFolders()
-                    currentFolder = folders.first { $0.id == folderId }
+                    await MainActor.run {
+                        currentFolder = folders.first { $0.id == folderId }
+                    }
                 } else {
-                    currentFolder = nil
+                    await MainActor.run {
+                        currentFolder = nil
+                    }
                 }
-                onUpdate?()
             } catch {
                 print("Error moving to folder: \(error)")
             }
@@ -346,7 +371,11 @@ struct SaveDetailView: View {
             await supabase.fetchAndUpdateMetadata(saveId: save.id, pageUrl: save.url)
             await MainActor.run {
                 isRefreshingMetadata = false
-                onUpdate?()
+                showMetadataUpdatedToast = true
+            }
+            try? await Task.sleep(nanoseconds: 1_500_000_000)
+            await MainActor.run {
+                showMetadataUpdatedToast = false
             }
         }
     }
