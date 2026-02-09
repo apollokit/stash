@@ -191,32 +191,34 @@ struct SaveDetailView: View {
                         .tint(currentFolder != nil ? Color(hex: currentFolder!.color) : .gray)
                     }
 
-                    // Refresh metadata button
-                    Button(action: refreshMetadata) {
-                        HStack {
-                            if isRefreshingMetadata {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .scaleEffect(0.8)
-                            } else {
-                                Image(systemName: "arrow.clockwise")
+                    // Refresh metadata and delete buttons
+                    HStack(spacing: 12) {
+                        Button(action: refreshMetadata) {
+                            HStack {
+                                if isRefreshingMetadata {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(0.8)
+                                } else {
+                                    Image(systemName: "arrow.clockwise")
+                                }
+                                Text("Update")
                             }
-                            Text("Update Metadata")
+                            .frame(maxWidth: .infinity)
                         }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(.gray)
-                    .disabled(isRefreshingMetadata)
+                        .buttonStyle(.bordered)
+                        .tint(.gray)
+                        .disabled(isRefreshingMetadata)
 
-                    Button(role: .destructive, action: { showDeleteConfirmation = true }) {
-                        HStack {
-                            Image(systemName: "trash")
-                            Text("Delete")
+                        Button(role: .destructive, action: { showDeleteConfirmation = true }) {
+                            HStack {
+                                Image(systemName: "trash")
+                                Text("Delete")
+                            }
+                            .frame(maxWidth: .infinity)
                         }
-                        .frame(maxWidth: .infinity)
+                        .buttonStyle(.bordered)
                     }
-                    .buttonStyle(.bordered)
 
                     // Comments section
                     CommentsSection(saveId: save.id)
