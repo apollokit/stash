@@ -1,6 +1,8 @@
+- chrome extension failed in starfish chrome profile
+- view comments on articles in the webapp
 - add handling for tags
 - add filtering by websites/domains
 - improve functionality of search bar/filtering
 - in webapp make folders section collapsible
 - use folder colors in the UI
-- add highlights share extension handling for ios (actually might not be possible - not sure that safari shares both a url and the highlight text to Stash)
+- add highlights share extension handling for ios (actually might not be possible - not sure that safari shares both a url and the highlight text to Stash)¡
