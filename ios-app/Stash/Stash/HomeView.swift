@@ -9,6 +9,7 @@ enum SavesViewMode: String, CaseIterable {
 
 struct HomeView: View {
     @EnvironmentObject var supabase: SupabaseService
+    @EnvironmentObject var recents: FolderRecents
 
     @State private var saves: [Save] = []
     @State private var folders: [Folder] = []
@@ -21,6 +22,11 @@ struct HomeView: View {
     @State private var browsingFolder: Folder?
     @State private var folderSaves: [Save] = []
     @State private var isLoadingFolderSaves = false
+
+    // Browse section: only manual toggles are persisted; collapsing after a pick is temporary
+    @AppStorage("isBrowseSectionExpanded") private var isBrowseSectionExpanded = true
+    @State private var isBrowseCollapsedAfterPick = false
+    @State private var showMoreFolders = false
 
     @State private var url = ""
     @State private var title = ""
@@ -397,93 +403,20 @@ struct HomeView: View {
                             }
                         }
                     } else {
-                    // Saves List with View Mode Selector
+                    // Browse section (switch between recent saves and folders)
+                    FolderBrowseSection(
+                        folders: recents.sorted(folders),
+                        browsingFolder: viewMode == .folders ? browsingFolder : nil,
+                        isExpanded: showBrowseChips,
+                        onToggle: toggleBrowseSection,
+                        onRefresh: refreshSaves,
+                        onSelectRecent: selectRecentSaves,
+                        onSelectFolder: selectFolder,
+                        onShowMore: { showMoreFolders = true }
+                    )
+
+                    // Saves List
                     VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Menu {
-                                // Recent Saves option
-                                Button(action: {
-                                    viewMode = .recent
-                                    savedViewMode = "recent"
-                                    savedFolderId = ""
-                                    browsingFolder = nil
-                                    folderSaves = []
-                                }) {
-                                    HStack {
-                                        Text("Recent Saves")
-                                    }
-                                }
-
-                                // Folders submenu
-                                Menu {
-                                    if folders.isEmpty {
-                                        Text("No folders yet")
-                                    } else {
-                                        ForEach(folders) { folder in
-                                            Button(action: {
-                                                viewMode = .folders
-                                                savedViewMode = "folders"
-                                                savedFolderId = folder.id
-                                                browsingFolder = folder
-                                                Task {
-                                                    await loadFolderSaves(folderId: folder.id)
-                                                }
-                                            }) {
-                                                HStack {
-                                                    Circle()
-                                                        .fill(Color(hex: folder.color))
-                                                        .frame(width: 10, height: 10)
-                                                    Text(folder.name)
-                                                }
-                                            }
-                                        }
-                                    }
-                                } label: {
-                                    HStack {
-                                        Text("Folders")
-                                    }
-                                }
-                            } label: {
-                                HStack(spacing: 4) {
-                                    if viewMode == .folders, let folder = browsingFolder {
-                                        Circle()
-                                            .fill(Color(hex: folder.color))
-                                            .frame(width: 8, height: 8)
-                                        Text(folder.name.uppercased())
-                                            .font(.caption)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.gray)
-                                            .tracking(0.5)
-                                    } else {
-                                        Text("RECENT SAVES")
-                                            .font(.caption)
-                                            .fontWeight(.semibold)
-                                            .foregroundColor(.gray)
-                                            .tracking(0.5)
-                                    }
-                                    Image(systemName: "chevron.down")
-                                        .font(.system(size: 10))
-                                        .foregroundColor(.gray)
-                                }
-                            }
-
-                            Spacer()
-
-                            Button(action: {
-                                Task {
-                                    await loadData()
-                                    if viewMode == .folders, let folder = browsingFolder {
-                                        await loadFolderSaves(folderId: folder.id)
-                                    }
-                                }
-                            }) {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                        }
-                        .padding(.horizontal)
-
                         if viewMode == .folders {
                             // Folder saves list
                             if let folder = browsingFolder {
@@ -596,11 +529,23 @@ struct HomeView: View {
                 await loadData()
             }
             .sheet(isPresented: $showFolderPicker) {
-                FolderSelector(currentFolderId: selectedFolder?.id) { folderId in
+                FolderSelector(currentFolderId: selectedFolder?.id, initialFolders: folders) { folderId in
                     if let folderId = folderId {
                         selectedFolder = folders.first { $0.id == folderId }
                     } else {
                         selectedFolder = nil
+                    }
+                }
+            }
+            .sheet(isPresented: $showMoreFolders) {
+                FolderSelector(
+                    currentFolderId: viewMode == .folders ? browsingFolder?.id : nil,
+                    allowsNoFolder: false,
+                    title: "Browse Folders",
+                    initialFolders: folders
+                ) { folderId in
+                    if let folder = folders.first(where: { $0.id == folderId }) {
+                        selectFolder(folder)
                     }
                 }
             }
@@ -700,6 +645,7 @@ struct HomeView: View {
 
             saves = try await savesRequest
             folders = try await foldersRequest
+            recents.prune(keeping: folders)
             errorMessage = nil  // Clear any previous errors on success
         } catch {
             // Check if this is a cancellation error (can come from different sources)
@@ -712,6 +658,53 @@ struct HomeView: View {
             }
         }
         isLoading = false
+    }
+
+    private var showBrowseChips: Bool {
+        isBrowseSectionExpanded && !isBrowseCollapsedAfterPick
+    }
+
+    private func toggleBrowseSection() {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            isBrowseSectionExpanded = !showBrowseChips
+            isBrowseCollapsedAfterPick = false
+        }
+    }
+
+    private func selectRecentSaves() {
+        viewMode = .recent
+        savedViewMode = "recent"
+        savedFolderId = ""
+        browsingFolder = nil
+        folderSaves = []
+        collapseBrowseSectionAfterPick()
+    }
+
+    private func selectFolder(_ folder: Folder) {
+        viewMode = .folders
+        savedViewMode = "folders"
+        savedFolderId = folder.id
+        browsingFolder = folder
+        recents.touch(folder.id)
+        collapseBrowseSectionAfterPick()
+        Task {
+            await loadFolderSaves(folderId: folder.id)
+        }
+    }
+
+    private func collapseBrowseSectionAfterPick() {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            isBrowseCollapsedAfterPick = true
+        }
+    }
+
+    private func refreshSaves() {
+        Task {
+            await loadData()
+            if viewMode == .folders, let folder = browsingFolder {
+                await loadFolderSaves(folderId: folder.id)
+            }
+        }
     }
 
     private func loadFolderSaves(folderId: String) async {

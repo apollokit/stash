@@ -4,6 +4,7 @@ import Combine
 @main
 struct StashApp: App {
     @StateObject private var supabase = SupabaseService.shared
+    @StateObject private var folderRecents = FolderRecents()
 
     var body: some Scene {
         WindowGroup {
@@ -15,6 +16,7 @@ struct StashApp: App {
                 }
             }
             .environmentObject(supabase)
+            .environmentObject(folderRecents)
         }
     }
 }
