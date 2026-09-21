@@ -38,6 +38,7 @@ struct HomeView: View {
     @State private var isSearching = false
     @State private var searchResults: [Save] = []
     @State private var hasSearched = false
+    @AppStorage("isSearchSectionExpanded") private var isSearchSectionExpanded = true
     @State private var isSearchOptionsExpanded = false
     @State private var searchStartDate: Date?
     @State private var searchEndDate: Date?
@@ -188,167 +189,179 @@ struct HomeView: View {
                                 }
 
                                 Spacer()
-                            }
 
-                            // Main search bar (FTS)
-                            HStack {
-                                if isSearching {
-                                    ProgressView()
-                                        .tint(.gray)
-                                        .scaleEffect(0.8)
-                                } else {
-                                    Image(systemName: "magnifyingglass")
-                                        .foregroundColor(.gray)
-                                }
-                                TextField("Search titles, content, comments...", text: $searchQuery)
-                                    .foregroundColor(.white)
-                                    .disabled(isSearching)
-                                    .onSubmit {
-                                        performSearch()
-                                    }
-                                if !searchQuery.isEmpty && !isSearching {
-                                    Button(action: { searchQuery = "" }) {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundColor(.gray)
-                                    }
-                                }
+                                Image(systemName: isSearchSectionExpanded ? "chevron.up" : "chevron.down")
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
                             }
-                            .padding()
-                            .background(Color(hex: "384559"))
-                            .cornerRadius(8)
-
-                            // Search options toggle
-                            Button(action: {
+                            .contentShape(Rectangle())
+                            .onTapGesture {
                                 withAnimation(.easeInOut(duration: 0.2)) {
-                                    isSearchOptionsExpanded.toggle()
-                                }
-                            }) {
-                                HStack {
-                                    Text("MORE FILTERS")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.gray)
-                                        .tracking(0.5)
-                                    Spacer()
-                                    Image(systemName: isSearchOptionsExpanded ? "chevron.up" : "chevron.down")
-                                        .font(.caption)
-                                        .foregroundColor(.gray)
+                                    isSearchSectionExpanded.toggle()
                                 }
                             }
 
-                            if isSearchOptionsExpanded {
-                                VStack(alignment: .leading, spacing: 16) {
-                                    // URL filter (ILIKE)
-                                    HStack {
-                                        Image(systemName: "link")
+                            if isSearchSectionExpanded {
+                                // Main search bar (FTS)
+                                HStack {
+                                    if isSearching {
+                                        ProgressView()
+                                            .tint(.gray)
+                                            .scaleEffect(0.8)
+                                    } else {
+                                        Image(systemName: "magnifyingglass")
                                             .foregroundColor(.gray)
-                                        TextField("e.g. economist.com", text: $searchUrlFilter)
-                                            .foregroundColor(.white)
-                                            .autocapitalization(.none)
-                                            .onSubmit {
-                                                performSearch()
-                                            }
-                                        if !searchUrlFilter.isEmpty {
-                                            Button(action: { searchUrlFilter = "" }) {
-                                                Image(systemName: "xmark.circle.fill")
-                                                    .foregroundColor(.gray)
-                                            }
+                                    }
+                                    TextField("Search titles, content, comments...", text: $searchQuery)
+                                        .foregroundColor(.white)
+                                        .disabled(isSearching)
+                                        .onSubmit {
+                                            performSearch()
+                                        }
+                                    if !searchQuery.isEmpty && !isSearching {
+                                        Button(action: { searchQuery = "" }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundColor(.gray)
                                         }
                                     }
-                                    .padding()
-                                    .background(Color(hex: "384559"))
-                                    .cornerRadius(8)
+                                }
+                                .padding()
+                                .background(Color(hex: "384559"))
+                                .cornerRadius(8)
 
-                                    Divider().background(Color.gray.opacity(0.3))
-
-                                    // Date filters
-                                    HStack(spacing: 12) {
-                                        // Start date
-                                        Button(action: { showStartDatePicker = true }) {
-                                            HStack {
-                                                Image(systemName: "calendar")
-                                                if let date = searchStartDate {
-                                                    Text(date, style: .date)
-                                                } else {
-                                                    Text("Start date")
-                                                }
-                                            }
-                                            .font(.subheadline)
-                                            .foregroundColor(searchStartDate != nil ? .white : .gray)
-                                            .padding(10)
-                                            .frame(maxWidth: .infinity)
-                                            .background(Color(hex: "384559"))
-                                            .cornerRadius(6)
-                                        }
-
-                                        // End date
-                                        Button(action: { showEndDatePicker = true }) {
-                                            HStack {
-                                                Image(systemName: "calendar")
-                                                if let date = searchEndDate {
-                                                    Text(date, style: .date)
-                                                } else {
-                                                    Text("End date")
-                                                }
-                                            }
-                                            .font(.subheadline)
-                                            .foregroundColor(searchEndDate != nil ? .white : .gray)
-                                            .padding(10)
-                                            .frame(maxWidth: .infinity)
-                                            .background(Color(hex: "384559"))
-                                            .cornerRadius(6)
-                                        }
+                                // Search options toggle
+                                Button(action: {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        isSearchOptionsExpanded.toggle()
                                     }
-
-                                    // Clear dates button
-                                    if searchStartDate != nil || searchEndDate != nil {
-                                        Button(action: {
-                                            searchStartDate = nil
-                                            searchEndDate = nil
-                                        }) {
-                                            Text("Clear dates")
-                                                .font(.caption)
-                                                .foregroundColor(Color(hex: "838CF1"))
-                                        }
-                                    }
-
-                                    Divider().background(Color.gray.opacity(0.3))
-
-                                    // Folder filter
-                                    Text("Folders:")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-
-                                    if folders.isEmpty {
-                                        Text("No folders")
+                                }) {
+                                    HStack {
+                                        Text("MORE FILTERS")
+                                            .font(.caption)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.gray)
+                                            .tracking(0.5)
+                                        Spacer()
+                                        Image(systemName: isSearchOptionsExpanded ? "chevron.up" : "chevron.down")
                                             .font(.caption)
                                             .foregroundColor(.gray)
-                                    } else {
-                                        FlowLayout(spacing: 8) {
-                                            ForEach(folders) { folder in
-                                                FolderFilterChip(
-                                                    folder: folder,
-                                                    isSelected: searchFolderIds.contains(folder.id)
-                                                ) {
-                                                    if searchFolderIds.contains(folder.id) {
-                                                        searchFolderIds.remove(folder.id)
-                                                    } else {
-                                                        searchFolderIds.insert(folder.id)
-                                                    }
+                                    }
+                                }
+
+                                if isSearchOptionsExpanded {
+                                    VStack(alignment: .leading, spacing: 16) {
+                                        // URL filter (ILIKE)
+                                        HStack {
+                                            Image(systemName: "link")
+                                                .foregroundColor(.gray)
+                                            TextField("e.g. economist.com", text: $searchUrlFilter)
+                                                .foregroundColor(.white)
+                                                .autocapitalization(.none)
+                                                .onSubmit {
+                                                    performSearch()
+                                                }
+                                            if !searchUrlFilter.isEmpty {
+                                                Button(action: { searchUrlFilter = "" }) {
+                                                    Image(systemName: "xmark.circle.fill")
+                                                        .foregroundColor(.gray)
                                                 }
                                             }
                                         }
+                                        .padding()
+                                        .background(Color(hex: "384559"))
+                                        .cornerRadius(8)
 
-                                        if !searchFolderIds.isEmpty {
-                                            Button(action: { searchFolderIds.removeAll() }) {
-                                                Text("Clear folder filter")
+                                        Divider().background(Color.gray.opacity(0.3))
+
+                                        // Date filters
+                                        HStack(spacing: 12) {
+                                            // Start date
+                                            Button(action: { showStartDatePicker = true }) {
+                                                HStack {
+                                                    Image(systemName: "calendar")
+                                                    if let date = searchStartDate {
+                                                        Text(date, style: .date)
+                                                    } else {
+                                                        Text("Start date")
+                                                    }
+                                                }
+                                                .font(.subheadline)
+                                                .foregroundColor(searchStartDate != nil ? .white : .gray)
+                                                .padding(10)
+                                                .frame(maxWidth: .infinity)
+                                                .background(Color(hex: "384559"))
+                                                .cornerRadius(6)
+                                            }
+
+                                            // End date
+                                            Button(action: { showEndDatePicker = true }) {
+                                                HStack {
+                                                    Image(systemName: "calendar")
+                                                    if let date = searchEndDate {
+                                                        Text(date, style: .date)
+                                                    } else {
+                                                        Text("End date")
+                                                    }
+                                                }
+                                                .font(.subheadline)
+                                                .foregroundColor(searchEndDate != nil ? .white : .gray)
+                                                .padding(10)
+                                                .frame(maxWidth: .infinity)
+                                                .background(Color(hex: "384559"))
+                                                .cornerRadius(6)
+                                            }
+                                        }
+
+                                        // Clear dates button
+                                        if searchStartDate != nil || searchEndDate != nil {
+                                            Button(action: {
+                                                searchStartDate = nil
+                                                searchEndDate = nil
+                                            }) {
+                                                Text("Clear dates")
                                                     .font(.caption)
                                                     .foregroundColor(Color(hex: "838CF1"))
                                             }
                                         }
+
+                                        Divider().background(Color.gray.opacity(0.3))
+
+                                        // Folder filter
+                                        Text("Folders:")
+                                            .font(.subheadline)
+                                            .foregroundColor(.gray)
+
+                                        if folders.isEmpty {
+                                            Text("No folders")
+                                                .font(.caption)
+                                                .foregroundColor(.gray)
+                                        } else {
+                                            FlowLayout(spacing: 8) {
+                                                ForEach(folders) { folder in
+                                                    FolderFilterChip(
+                                                        folder: folder,
+                                                        isSelected: searchFolderIds.contains(folder.id)
+                                                    ) {
+                                                        if searchFolderIds.contains(folder.id) {
+                                                            searchFolderIds.remove(folder.id)
+                                                        } else {
+                                                            searchFolderIds.insert(folder.id)
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            if !searchFolderIds.isEmpty {
+                                                Button(action: { searchFolderIds.removeAll() }) {
+                                                    Text("Clear folder filter")
+                                                        .font(.caption)
+                                                        .foregroundColor(Color(hex: "838CF1"))
+                                                }
+                                            }
+                                        }
                                     }
+                                    .padding(.top, 8)
                                 }
-                                .padding(.top, 8)
                             }
                         }
                         .padding()
